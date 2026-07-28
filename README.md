@@ -217,7 +217,7 @@ SOURCE display_data/业务数据准备/ecs.sql;
 
 或命令行一键导入：
 ```bash
-mysql -u root -p ecommerce < display_data/业务数据准备/ecs.sql
+mysql -u root -p --default-character-set=utf8mb4 ecommerce < display_data/业务数据准备/ecs.sql
 ```
 
 **② 生成模拟数据：**

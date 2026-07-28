@@ -754,15 +754,14 @@
                 toast('请输入用户 ID');
                 return;
             }
-            const cmd = `/SetSlots(user_id=${userId})`;
             if (showToast) {
                 addMessage(`切换用户: ${userId}`, 'system');
             }
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'message', message: cmd }));
-            }
-            if (showToast) {
-                setTimeout(refreshState, 200);
+                ws.send(JSON.stringify({ type: 'connect', session_id: userId }));
+                sessionId = userId;
+                localStorage.setItem('flowmind_session', sessionId);
+                refreshState();
             }
         }
 

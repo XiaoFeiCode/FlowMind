@@ -1,8 +1,8 @@
-drop      database if exists ecs;
+drop      database if exists ecommerce;
 
-create database ecs;
+create database ecommerce;
 
-use ecs;
+use ecommerce;
 
 create    table region (
           province varchar(50) not null comment '省',

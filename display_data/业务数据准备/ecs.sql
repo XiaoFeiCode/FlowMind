@@ -236,7 +236,7 @@ create    table logistics (
           create_time timestamp not null comment '创建时间',
           delivered_time timestamp default null comment '签收时间',
           logistics_tracking text comment '物流明细',
-          logistics_category enum ('退货', '换货退货', '换货发货') default null comment '物流类别'
+          logistics_category varchar(20) default null comment '物流类别'
           ) comment '物流表';
 
 -- 订单与物流关联表
@@ -266,7 +266,7 @@ create    table postsale (
           complete_time timestamp default null comment '完成时间',
           order_detail_id varchar(50) not null comment '订单明细ID',
           refund_amount decimal(10, 2) default 0.00 comment '退款金额',
-          postsale_type enum ('退款', '退货', '换货') comment '售后类型',
+          postsale_type varchar(10) not null comment '售后类型',
           postsale_reason varchar(500) not null comment '售后原因',
           postsale_status varchar(20) not null comment '售后状态',
           receive_id varchar(50) not null comment '收货信息ID',

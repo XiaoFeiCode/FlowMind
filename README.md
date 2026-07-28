@@ -249,6 +249,95 @@ flowmind run
 
 ---
 
+## 🐳 Docker 部署（推荐）
+
+### 服务器要求
+
+- **系统**：Linux（Ubuntu 20.04+ / CentOS 7+），已安装 Docker + Docker Compose
+- **内存**：≥ 8GB（MySQL + Neo4j + Python 应用）
+- **磁盘**：≥ 10GB 可用空间
+
+### 1. 克隆项目
+
+```bash
+git clone https://github.com/XiaoFeiCode/FlowMind.git
+cd FlowMind/llm_customer_service
+```
+
+### 2. 下载嵌入模型
+
+```bash
+# 项目仓库只含配置文件，391MB 的 pytorch_model.bin 需单独下载
+cd ecs_demo/models/bge-base-zh-v1.5
+wget https://huggingface.co/BAAI/bge-base-zh-v1.5/resolve/main/pytorch_model.bin
+cd ../../..
+```
+
+### 3. 配置环境变量
+
+```bash
+cp .docker.env.example .docker.env
+vim .docker.env  # 填入 DASHSCOPE_API_KEY、MYSQL_PASSWORD、NEO4J_PASSWORD
+```
+
+### 4. 导入 Neo4j 知识图谱
+
+```bash
+# 启动 Neo4j（不启动应用）
+docker compose --env-file .docker.env up -d neo4j
+
+# 等待 Healthy 后导入数据
+docker compose exec neo4j neo4j-admin database load \
+  --from-path=/import --overwrite-destination=true neo4j --force
+
+# 或者直接用 dump 文件恢复：
+docker compose cp display_data/neo4j导入数据/neo4j.dump flowmind-neo4j:/var/lib/neo4j/import/
+# 然后在容器内执行 load 命令
+```
+
+### 5. 启动全部服务
+
+```bash
+docker compose --env-file .docker.env up -d
+```
+
+### 6. 查看状态
+
+```bash
+docker compose logs -f app    # 查看应用日志
+docker compose ps              # 查看所有服务状态
+```
+
+### 7. 宝塔面板配置反向代理
+
+在宝塔面板中添加反向代理：
+
+| 配置项 | 值 |
+|--------|-----|
+| **代理名称** | FlowMind |
+| **目标 URL** | `http://127.0.0.1:8002` |
+| **发送域名** | 你的真实域名 |
+
+服务端口映射关系：
+
+```
+用户 → 域名(HTTPS) → 宝塔 Nginx → 127.0.0.1:8002 → Docker 容器:8000
+```
+
+### 8. 测试接口
+
+```bash
+# 健康检查
+curl http://127.0.0.1:8002/health
+
+# 发送对话
+curl -X POST http://127.0.0.1:8002/conversations/test/messages \
+  -H "Content-Type: application/json" \
+  -d '{"text": "你好，帮我查一下订单"}'
+```
+
+---
+
 ## 🔐 安全说明
 
 - 所有 API Key、数据库密码通过 `.env` 环境变量注入，**不硬编码在代码中**

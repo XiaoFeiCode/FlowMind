@@ -25,6 +25,8 @@ env/
 .env
 *.env
 !*.env.example
+!*.docker.env.example
+.docker.env
 config.local.yml
 
 # ============================================================

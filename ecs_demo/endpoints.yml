@@ -11,13 +11,13 @@ models:
 
 # 向量存储配置 (Neo4j)
 vector_store:
-  uri: bolt://localhost:7687
-  user: neo4j
+  uri: bolt://${NEO4J_HOST:localhost}:${NEO4J_PORT:7687}
+  user: ${NEO4J_USER:neo4j}
   password: ${NEO4J_PASSWORD}
 
 # 数据库配置 (MySQL)
 database:
-  url: mysql+pymysql://root:${MYSQL_PASSWORD}@localhost:3306/ecommerce
+  url: mysql+pymysql://${MYSQL_USER:root}:${MYSQL_PASSWORD}@${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:ecommerce}
 
 # Tracker存储配置
 tracker_store:

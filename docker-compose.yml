@@ -1,0 +1,116 @@
+# ============================================================
+# FlowMind Docker Compose
+# ============================================================
+# 启动: docker compose --env-file .docker.env up -d
+# 停止: docker compose down
+# 查看日志: docker compose logs -f app
+# ============================================================
+
+version: "3.8"
+
+services:
+  # ==============================
+  # FlowMind 应用服务
+  # ==============================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flowmind-app
+    restart: unless-stopped
+    ports:
+      # 宝塔反向代理: 127.0.0.1:8002 → 容器:8000
+      - "8002:8000"
+    env_file:
+      - .docker.env
+    environment:
+      # 覆盖默认值，指向 docker-compose 服务名
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+    volumes:
+      # 嵌入模型（需先下载 bge-base-zh-v1.5 的 pytorch_model.bin 到此处）
+      - ./ecs_demo/models:/app/models:ro
+      # 业务数据（flows、actions、endpoints 等）
+      - ./ecs_demo:/app/data:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    networks:
+      - flowmind-net
+
+  # ==============================
+  # MySQL — 业务数据存储
+  # ==============================
+  mysql:
+    image: mysql:8.0
+    container_name: flowmind-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ecommerce
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 自动初始化数据库表结构
+      - ./display_data/业务数据准备/ecs.sql:/docker-entrypoint-initdb.d/01-ecs.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      # 仅调试时开放，生产环境建议注释掉
+      - "3307:3306"
+    networks:
+      - flowmind-net
+
+  # ==============================
+  # Neo4j — 知识图谱
+  # ==============================
+  neo4j:
+    image: neo4j:5
+    container_name: flowmind-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      # 仅调试时开放，生产环境建议注释掉
+      - "7475:7474"
+      - "7688:7687"
+    networks:
+      - flowmind-net
+
+# ==============================
+# 持久化存储卷
+# ==============================
+volumes:
+  mysql-data:
+    driver: local
+  neo4j-data:
+    driver: local
+  neo4j-logs:
+    driver: local
+
+# ==============================
+# 内部网络
+# ==============================
+networks:
+  flowmind-net:
+    driver: bridge

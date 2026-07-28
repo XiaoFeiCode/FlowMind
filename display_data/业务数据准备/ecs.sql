@@ -235,7 +235,7 @@ create    table logistics (
           logistics_id varchar(50) primary key comment '物流ID',
           create_time timestamp not null comment '创建时间',
           delivered_time timestamp default null comment '签收时间',
-          logistics_tracking varchar(500) comment '物流明细',
+          logistics_tracking text comment '物流明细',
           logistics_category enum ('退货', '换货退货', '换货发货') default null comment '物流类别'
           ) comment '物流表';
 

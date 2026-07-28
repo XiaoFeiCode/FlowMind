@@ -110,7 +110,7 @@ class ActionCheckPostsaleEligible(Action):
                     session.query(OrderInfo)
                     .join(OrderInfo.order_status_)
                     .options(joinedload(OrderInfo.order_detail))
-                    .filter_by(order_id=order_id)
+                    .filter(OrderInfo.order_id == order_id)
                     .first()
                 )
                 
@@ -255,13 +255,17 @@ class ActionApplyPostsale(Action):
                     result.add_response("未找到该订单。")
                     return result
                 
-                # 确定初始售后状态
+                # 映射用户输入（支持数字1/2/3 或中文）
+                type_map = {"1": "退款", "2": "退货", "3": "换货", "退款": "退款", "退货": "退货", "换货": "换货"}
+                postsale_type = type_map.get(postsale_type, "退款")
+                
+                # 确定初始售后状态（匹配 ecs.sql 中 postsale_status 表的实际值）
                 status_map = {
-                    "退款": "退款待审核",
-                    "退货": "退货待审核", 
-                    "换货": "换货待审核",
+                    "退款": "审核中",
+                    "退货": "审核中", 
+                    "换货": "审核中",
                 }
-                initial_status = status_map.get(postsale_type, "退款待审核")
+                initial_status = status_map.get(postsale_type, "审核中")
                 
                 # 为每个订单明细创建售后记录
                 created_postsales = []

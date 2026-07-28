@@ -255,7 +255,7 @@ class ActionGetOrderDetail(Action):
                 
                 # 最近物流信息
                 logistics = order_info.logistics
-                if logistics:
+                if logistics and logistics[0].logistics_tracking:
                     message.append("- **最近物流信息**：")
                     message.append(f"  - {logistics[0].logistics_tracking.splitlines()[-1]}")
                 
@@ -308,10 +308,11 @@ class ActionGetOrderDetail(Action):
                                 postsale.logistics = sorted(
                                     postsale.logistics, key=lambda x: x.create_time, reverse=True
                                 )
-                                ps_message.append("- **最近物流信息**：")
-                                ps_message.append(
-                                    f"  - {postsale.logistics[0].logistics_tracking.splitlines()[-1]}"
-                                )
+                                if postsale.logistics[0].logistics_tracking:
+                                    ps_message.append("- **最近物流信息**：")
+                                    ps_message.append(
+                                        f"  - {postsale.logistics[0].logistics_tracking.splitlines()[-1]}"
+                                    )
                             
                             result.add_response("\n".join(ps_message))
                 

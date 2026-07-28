@@ -210,7 +210,7 @@ def gen_postsale(
         postsale_id="pts" + uuid4().hex[:16],
         create_time=create_time,
         order_detail_id=order_detail.order_detail_id,
-        postsale_reason=random.choice(postsale_reasons).postsale_reason,
+        postsale_reason=random.choice(postsale_reasons).postsale_reason if postsale_reasons else "其他原因",
         postsale_status=postsale_status.postsale_status,
         complete_time=None,
         refund_amount=order_detail.final_amount,
@@ -348,7 +348,7 @@ def gen_order_info(user_info: UserInfo) -> OrderInfo:
         else PostsaleStatus.status_code <= 499
     )
     with Session(engine) as session:
-        postsale_status = random.choice(
+        status_list = (
             session.query(PostsaleStatus)
             .filter(
                 type_condition[postsale_type],
@@ -356,6 +356,10 @@ def gen_order_info(user_info: UserInfo) -> OrderInfo:
             )
             .all()
         )
+        if not status_list:
+            order_info.complete_time = gen_new_time(order_info.delivered_time, 6 * 60 * 60)
+            return order_info
+        postsale_status = random.choice(status_list)
     # 选择若干个订单明细关联售后信息
     order_details = random.choices(
         order_info.order_detail,

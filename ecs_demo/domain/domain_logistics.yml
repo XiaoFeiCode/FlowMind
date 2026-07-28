@@ -13,5 +13,6 @@ slots:
 
 actions:
   # === 查询承运商 ===
+  - action_ask_order_id  # 查询可退货订单
   - action_get_logistics_companys  # 获取支持的承运商
   - action_get_logistics_info  # 根据指定的订单id，查询具体的物流信息

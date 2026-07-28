@@ -28,5 +28,7 @@ responses:
 
 # 售后相关Action声明
 actions:
+  - action_ask_order_id_after_delivered
   - action_check_postsale_eligible
+  - action_ask_postsale_reason
   - action_apply_postsale

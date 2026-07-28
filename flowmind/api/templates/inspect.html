@@ -565,6 +565,7 @@
         let currentFlowId = null;
         let currentFlowIndex = null;
         let trackerData = null;
+        let typingTimer = null;
 
         // ============================================================
         // WebSocket（自动检测 wss:// / ws://）
@@ -591,6 +592,7 @@
                 try {
                     const data = JSON.parse(event.data);
                     if (data.type === 'bot_response' && data.data) {
+                        hideTyping();
                         data.data.forEach(msg => {
                             const text = msg.text || JSON.stringify(msg);
                             const buttons = msg.buttons || [];
@@ -681,6 +683,7 @@
         }
 
         function hideTyping() {
+            if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
             const typing = document.getElementById('typing');
             if (typing) typing.remove();
         }
@@ -696,8 +699,7 @@
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'message', message: text }));
                 showTyping();
-                // 收到回复后自动隐藏 typing（在 onmessage 中 remove）
-                setTimeout(hideTyping, 8000); // 8秒超时兜底
+                typingTimer = setTimeout(hideTyping, 8000);
             } else {
                 addMessage('⚠️ WebSocket 未连接，请稍后重试', 'system');
             }

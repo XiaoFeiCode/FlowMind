@@ -283,17 +283,22 @@ vim .docker.env  # 填入 DASHSCOPE_API_KEY、MYSQL_PASSWORD、NEO4J_PASSWORD
 ### 4. 导入 Neo4j 知识图谱
 
 ```bash
-# 启动 Neo4j（不启动应用）
+# ① 先让 Neo4j 启动一次，生成数据目录结构
 docker compose --env-file .docker.env up -d neo4j
 
-# 等待 Healthy 后导入数据
-docker compose exec neo4j neo4j-admin database load \
-  --from-path=/import --overwrite-destination=true neo4j --force
+# ② 等待 neo4j Healthy（约 30 秒）
+docker compose ps neo4j
 
-# 或者直接用 dump 文件恢复：
-docker compose cp display_data/neo4j导入数据/neo4j.dump flowmind-neo4j:/var/lib/neo4j/import/
-# 然后在容器内执行 load 命令
+# ③ 停止 neo4j（导入数据要求数据库离线）
+docker compose stop neo4j
+
+# ④ 执行数据导入（dump 文件已挂载到容器的 /import 目录）
+docker compose --env-file .docker.env run --rm neo4j-init
+
+# ⑤ 导入成功后会显示 "Neo4j 数据导入完成！"
 ```
+
+> 💡 如果之前已经导入过数据，`--overwrite-destination=true` 会覆盖已有数据，可放心重复执行。
 
 ### 5. 启动全部服务
 

@@ -75,6 +75,7 @@ services:
   # ==============================
   # Neo4j — 知识图谱
   # ==============================
+  # 首次启动后需导入数据，详见下方 init-neo4j 服务
   neo4j:
     image: neo4j:5
     container_name: flowmind-neo4j
@@ -82,18 +83,57 @@ services:
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
       NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1g
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
+      # 挂载 dump 文件目录，供 init-neo4j 服务导入用
+      - ./display_data/neo4j导入数据:/import:ro
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474"]
       interval: 10s
       timeout: 5s
       retries: 5
     ports:
-      # 仅调试时开放，生产环境建议注释掉
+      # Neo4j Browser（调试用，生产建议注释掉）
       - "7475:7474"
+      # Bolt 协议（调试用，生产建议注释掉）
       - "7688:7687"
+    networks:
+      - flowmind-net
+
+  # ==============================
+  # Neo4j 数据初始化（仅首次运行）
+  # ==============================
+  # 用法: docker compose --env-file .docker.env run --rm neo4j-init
+  # 完成后用 docker compose --env-file .docker.env up -d 启动全部服务
+  neo4j-init:
+    image: neo4j:5
+    container_name: flowmind-neo4j-init
+    profiles:
+      - init  # 不随 up 自动启动，需手动 run
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        echo "=== Neo4j 数据导入开始 ==="
+        echo "检查 dump 文件..."
+        if [ ! -f /import/neo4j.dump ]; then
+          echo "错误: /import/neo4j.dump 不存在！请确认 display_data/neo4j导入数据/neo4j.dump 文件存在。"
+          exit 1
+        fi
+        echo "dump 文件大小: $$(du -h /import/neo4j.dump | cut -f1)"
+        echo "正在导入知识图谱数据..."
+        neo4j-admin database load \
+          --from-path=/import \
+          --overwrite-destination=true \
+          neo4j
+        echo "=== Neo4j 数据导入完成！==="
+    volumes:
+      - neo4j-data:/data
+      - ./display_data/neo4j导入数据:/import:ro
     networks:
       - flowmind-net
 

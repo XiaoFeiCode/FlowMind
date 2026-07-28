@@ -3,475 +3,749 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;">
-    <title>FlowMind AI - Inspect</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self' ws: wss:;">
+    <title>FlowMind · 汇智智能客服 — 调试面板</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #222244;
+            --border: #2a2a4a;
+            --accent: #6c5ce7;
+            --accent-hover: #7c6cf7;
+            --danger: #e94560;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text-primary: #e8e8f0;
+            --text-secondary: #9090a8;
+            --text-muted: #606078;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --transition: 0.2s ease;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: #1a1a2e; 
-            color: #eee;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
+            font-size: 13px;
         }
-        .container { 
-            display: grid; 
-            grid-template-columns: 320px 1fr 360px; 
-            gap: 12px; 
-            height: 100vh; 
-            padding: 12px; 
+        /* ===== 顶部导航 ===== */
+        .topbar {
+            height: 44px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            flex-shrink: 0;
         }
-        .panel { 
-            background: #16213e; 
-            border-radius: 8px; 
+        .topbar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--danger));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .topbar .logo span { font-weight: 400; }
+        .topbar .spacer { flex: 1; }
+        .topbar .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+            display: inline-block;
+        }
+        .topbar .status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
+        .topbar .status-dot.off { background: var(--danger); }
+        .topbar .status-text { font-size: 12px; color: var(--text-secondary); }
+        /* ===== 主布局 ===== */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 380px;
+            height: calc(100vh - 44px);
+            gap: 0;
+        }
+        /* ===== 左侧 ===== */
+        .left-sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-        .panel-header { 
-            padding: 12px 16px; 
-            border-bottom: 1px solid #0f3460;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .panel-header h2 { 
-            font-size: 14px; 
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .panel-content { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 12px;
-        }
-        /* 左侧面板 */
-        .left-panel {
+        .left-sidebar .section {
+            border-bottom: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-        }
-        .left-panel .panel {
-            flex: 1;
             min-height: 0;
         }
+        .left-sidebar .section.flow-history { flex: 0 0 180px; overflow: hidden; }
+        .left-sidebar .section.detail-panel { flex: 1; overflow: hidden; }
+        .section-header {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .section-header h3 {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .section-header .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+        .section-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 10px;
+        }
+        .section-body::-webkit-scrollbar { width: 4px; }
+        .section-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
         /* Tabs */
-        .tabs { display: flex; gap: 4px; }
-        .tab { 
-            padding: 6px 12px; 
-            background: transparent; 
-            border: none; 
-            color: #64748b; 
-            cursor: pointer; 
-            border-radius: 6px;
+        .tabs {
+            display: flex;
+            gap: 2px;
+            padding: 0 10px 8px;
+        }
+        .tab {
+            padding: 5px 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
             font-size: 12px;
             font-weight: 500;
+            transition: var(--transition);
         }
-        .tab.active { background: #0f3460; color: #e94560; }
-        .tab:hover:not(.active) { background: #1e3a5f; }
-        .tab-content { display: none; height: 100%; }
+        .tab.active {
+            background: rgba(108,92,231,0.2);
+            color: var(--accent);
+        }
+        .tab:hover:not(.active) { color: var(--text-secondary); }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* 表格 */
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { 
-            padding: 8px 10px; 
-            text-align: left; 
-            border-bottom: 1px solid #0f3460; 
+        /* Flow History 行 */
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
         }
-        th { color: #64748b; font-weight: 500; }
-        td { color: #cbd5e1; }
-        tr:hover td { background: #1e3a5f; }
-        .flow-row { cursor: pointer; }
-        .flow-row.active td { background: #0f3460; color: #e94560; }
-        /* Flow 图 */
-        .flow-panel { background: #fff; }
-        .flow-panel .panel-header { background: #16213e; }
-        .flow-panel .panel-content { background: #fff; padding: 20px; }
-        .mermaid { width: 100%; }
-        .no-flow { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100%; 
-            color: #64748b;
-            flex-direction: column;
-            gap: 12px;
+        .flow-item:hover { background: var(--bg-tertiary); }
+        .flow-item.active { background: rgba(108,92,231,0.2); }
+        .flow-item .flow-icon {
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
         }
-        .no-flow svg { width: 48px; height: 48px; opacity: 0.5; }
-        .pattern-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin-bottom: 16px;
+        .flow-item .flow-icon.running { background: rgba(108,92,231,0.3); color: var(--accent); }
+        .flow-item .flow-icon.done { background: rgba(16,185,129,0.3); color: var(--success); }
+        .flow-item .flow-name { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .flow-item .flow-status { font-size: 10px; color: var(--text-muted); }
+        /* Slots 表 */
+        .kv-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 8px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 2px;
+            font-size: 12px;
         }
-        .pattern-info strong { font-size: 16px; }
-        .pattern-info p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
-        /* 聊天 */
-        #chat-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 12px;
+        .kv-row:hover { background: var(--bg-tertiary); }
+        .kv-key { color: var(--text-secondary); min-width: 80px; flex-shrink: 0; }
+        .kv-val {
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            color: var(--accent);
+            word-break: break-all;
+            font-size: 11px;
+        }
+        .kv-val.null { color: var(--text-muted); font-style: italic; }
+        /* Events */
+        .event-item {
+            padding: 8px 10px;
+            border-left: 2px solid var(--border);
+            margin-bottom: 4px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 11px;
+            transition: var(--transition);
+        }
+        .event-item.user { border-color: var(--danger); background: rgba(233,69,96,0.06); }
+        .event-item.bot { border-color: var(--success); background: rgba(16,185,129,0.06); }
+        .event-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .event-tag.user { background: var(--danger); color: #fff; }
+        .event-tag.bot { background: var(--success); color: #fff; }
+        /* Tracker JSON */
+        .tracker-json {
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+        /* ===== 中间 ===== */
+        .center-panel {
+            background: #1e1e30;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            overflow: hidden;
         }
-        .message { 
-            padding: 10px 14px; 
-            border-radius: 12px; 
-            max-width: 85%;
+        .center-panel .section-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .center-body {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .center-body::-webkit-scrollbar { width: 4px; }
+        .center-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .mermaid { max-width: 100%; }
+        .mermaid svg { max-width: 100%; height: auto; }
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
+        .empty-state .text { font-size: 13px; }
+        .empty-state .hint { font-size: 11px; margin-top: 4px; opacity: 0.7; }
+        /* Pattern Info */
+        .pattern-card {
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .pattern-card strong { font-size: 15px; }
+        .pattern-card p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
+        .pattern-card code { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        /* ===== 右侧聊天 ===== */
+        .right-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .chat-header .avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--danger));
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 14px;
-            line-height: 1.4;
+            flex-shrink: 0;
         }
-        .user { 
-            background: #e94560; 
-            color: white; 
-            margin-left: auto; 
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-body::-webkit-scrollbar { width: 4px; }
+        .chat-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.55;
+            animation: msgIn 0.25s ease;
+            word-break: break-word;
+        }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.user {
+            background: var(--accent);
+            color: #fff;
+            align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
-        .bot { 
-            background: #0f3460; 
-            color: #e2e8f0;
+        .msg.bot {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
-        /* 消息按钮 */
-        .message-buttons {
+        .msg.system {
+            background: transparent;
+            color: var(--text-muted);
+            align-self: center;
+            font-size: 11px;
+            padding: 4px 12px;
+            max-width: 100%;
+        }
+        .msg-buttons {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 6px;
+            margin-top: 8px;
         }
-        .message-btn {
-            padding: 8px 16px;
-            background: #1e3a5f;
-            color: #e2e8f0;
-            border: 1px solid #0f3460;
-            border-radius: 8px;
+        .msg-btn {
+            padding: 6px 14px;
+            background: var(--bg-secondary);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
+            font-size: 12px;
+            transition: var(--transition);
+            font-weight: 500;
         }
-        .message-btn:hover {
-            background: #e94560;
-            border-color: #e94560;
-            color: white;
-        }
-        .input-area { 
-            padding: 12px;
-            border-top: 1px solid #0f3460;
-        }
-        .input-group { display: flex; gap: 8px; }
-        #message-input { 
-            flex: 1; 
-            padding: 10px 14px; 
-            border: 1px solid #0f3460; 
-            border-radius: 8px;
-            background: #1e3a5f;
+        .msg-btn:hover {
+            background: var(--accent);
             color: #fff;
-            font-size: 14px;
         }
-        #message-input:focus { outline: none; border-color: #e94560; }
-        #message-input::placeholder { color: #64748b; }
-        button { 
-            padding: 10px 16px; 
-            background: #e94560; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 14px;
+            align-self: flex-start;
+        }
+        .typing-indicator span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            animation: bounce 1.2s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+        .chat-input-area {
+            padding: 10px 14px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .chat-input-area .toolbar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .chat-input-area .toolbar input[type="text"] {
+            flex: 1;
+            padding: 5px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        .chat-input-area .toolbar input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .chat-input-area .toolbar label {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .chat-input-area .input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .chat-input-area .input-row input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .chat-input-area .input-row input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(108,92,231,0.15);
+        }
+        .chat-input-area .input-row input::placeholder { color: var(--text-muted); }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius);
             cursor: pointer;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
+            transition: var(--transition);
+            white-space: nowrap;
         }
-        button:hover { background: #d63850; }
-        button.secondary { background: #0f3460; }
-        button.secondary:hover { background: #1e3a5f; }
-        /* 状态 */
-        .status { 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-            font-size: 11px;
-            font-weight: 500;
-        }
-        .connected { background: #10b981; color: white; }
-        .disconnected { background: #ef4444; color: white; }
-        /* Slot 值 */
-        .slot-value { 
-            font-family: 'Monaco', 'Menlo', monospace;
-            background: #0f3460;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-        .slot-null { color: #64748b; font-style: italic; }
-        /* Events */
-        .event-item { 
-            padding: 8px 10px;
-            border-left: 3px solid #0f3460;
-            margin-bottom: 6px;
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
             font-size: 12px;
+            padding: 6px 12px;
         }
-        .event-item.user { border-color: #e94560; background: rgba(233, 69, 96, 0.1); }
-        .event-item.bot { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        .event-type { color: #64748b; font-size: 10px; text-transform: uppercase; }
-        /* Logo */
-        .logo { 
-            font-size: 18px; 
-            font-weight: 700;
-            color: #e94560;
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: var(--radius-sm); }
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            box-shadow: var(--shadow);
+            z-index: 999;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+            border: 1px solid var(--border);
         }
-        .logo span { color: #fff; }
-        /* Empty state */
-        .empty-state { 
-            color: #64748b; 
-            font-size: 12px;
-            padding: 20px;
-            text-align: center;
-        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 左侧面板 -->
-        <div class="left-panel">
+    <!-- 顶部栏 -->
+    <div class="topbar">
+        <div class="logo">FlowMind · <span>汇智智能客服</span></div>
+        <span class="spacer"></span>
+        <span class="status-dot off" id="status-dot"></span>
+        <span class="status-text" id="status-text">未连接</span>
+        <button class="btn btn-secondary btn-sm" onclick="refreshState()" style="margin-left:8px;">↻ 刷新</button>
+    </div>
+
+    <!-- 主布局 -->
+    <div class="main-layout">
+        <!-- ===== 左侧边栏 ===== -->
+        <div class="left-sidebar">
             <!-- Flow 历史 -->
-            <div class="panel" style="flex: 0 0 auto; max-height: 200px;">
-                <div class="panel-header">
-                    <h2>Flow History</h2>
-                    <span id="flow-count">0 flows</span>
+            <div class="section flow-history">
+                <div class="section-header">
+                    <h3>📋 Flow History</h3>
+                    <span class="badge" id="flow-count">0</span>
                 </div>
-                <div class="panel-content">
-                    <table>
-                        <thead><tr><th>Flow</th><th>Status</th></tr></thead>
-                        <tbody id="flow-history"></tbody>
-                    </table>
+                <div class="section-body" id="flow-history-list">
+                    <div class="empty-state" style="padding:20px;">
+                        <div class="text">暂无活跃 Flow</div>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Slots / Events / Tracker -->
-            <div class="panel" style="flex: 1;">
-                <div class="panel-header">
-                    <div class="tabs">
-                        <button class="tab active" onclick="switchTab('slots')">Slots</button>
-                        <button class="tab" onclick="switchTab('events')">Events</button>
-                        <button class="tab" onclick="switchTab('tracker')">Tracker</button>
-                    </div>
+            <!-- 详情面板 -->
+            <div class="section detail-panel">
+                <div class="tabs">
+                    <button class="tab active" data-tab="slots">Slots</button>
+                    <button class="tab" data-tab="events">Events</button>
+                    <button class="tab" data-tab="tracker">Tracker</button>
                 </div>
-                <div class="panel-content">
-                    <div id="slots-tab" class="tab-content active">
-                        <table>
-                            <thead><tr><th>Name</th><th>Value</th></tr></thead>
-                            <tbody id="slots-table"></tbody>
-                        </table>
+                <div class="section-body">
+                    <div class="tab-content active" id="tab-slots">
+                        <div id="slots-list"></div>
                     </div>
-                    <div id="events-tab" class="tab-content">
+                    <div class="tab-content" id="tab-events">
                         <div id="events-list"></div>
                     </div>
-                    <div id="tracker-tab" class="tab-content">
-                        <pre id="tracker-json" style="font-size: 11px; color: #94a3b8; white-space: pre-wrap;"></pre>
+                    <div class="tab-content" id="tab-tracker">
+                        <pre class="tracker-json" id="tracker-json"></pre>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- 中间 Flow 图 -->
-        <div class="panel flow-panel">
-            <div class="panel-header">
-                <h2>Flow: <span id="current-flow-name">-</span></h2>
-                <button class="secondary" onclick="refreshFlows()">Refresh</button>
+
+        <!-- ===== 中间 Flow 图 ===== -->
+        <div class="center-panel">
+            <div class="section-header">
+                <h3>📊 Flow: <span id="current-flow-name" style="color: var(--accent);">—</span></h3>
+                <button class="btn btn-secondary btn-sm" onclick="refreshFlows()">刷新图谱</button>
             </div>
-            <div class="panel-content">
-                <div id="flow-diagram">
-                    <div class="no-flow">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M9 17V7m0 10l-3-3m3 3l3-3M15 7v10m0-10l3 3m-3-3l-3 3"/>
-                        </svg>
-                        <div>选择左侧的 Flow 查看图形</div>
-                    </div>
+            <div class="center-body" id="center-body">
+                <div class="empty-state" id="flow-empty">
+                    <div class="icon">📐</div>
+                    <div class="text">选择左侧 Flow 查看流程图</div>
+                    <div class="hint">点击 Flow History 中的任一项</div>
                 </div>
+                <div id="flow-diagram" style="width:100%;"></div>
             </div>
         </div>
-        
-        <!-- 右侧聊天 -->
-        <div class="panel">
-            <div class="panel-header">
-                <div class="logo">FlowMind<span>AI</span></div>
-                <span id="status" class="status disconnected">Disconnected</span>
-            </div>
-            <div id="chat-box"></div>
-            <div class="input-area">
-                <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
-                    <label style="font-size: 12px; color: #666; white-space: nowrap;">用户ID:</label>
-                    <input type="text" id="user-id-input" placeholder="输入用户ID" value="1001"
-                           style="flex: 1; padding: 4px 8px; font-size: 12px;">
-                    <button class="secondary" onclick="setUserId()" style="padding: 4px 12px; font-size: 12px;">切换</button>
+
+        <!-- ===== 右侧聊天 ===== -->
+        <div class="right-panel">
+            <div class="chat-header">
+                <div class="avatar">🤖</div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:14px;">FlowMind 助手</div>
+                    <div style="font-size:11px;color:var(--text-muted);">在线 · 随时为您服务</div>
                 </div>
-                <div class="input-group">
-                    <input type="text" id="message-input" placeholder="输入消息..." 
+            </div>
+            <div class="chat-body" id="chat-box">
+                <div class="msg system">👋 欢迎使用 FlowMind 汇智智能客服调试面板</div>
+            </div>
+            <div class="chat-input-area">
+                <div class="toolbar">
+                    <label>用户ID</label>
+                    <input type="text" id="user-id-input" value="1001" style="width:80px;">
+                    <button class="btn btn-secondary btn-sm" onclick="setUserId()">切换</button>
+                    <span class="spacer"></span>
+                    <button class="btn btn-secondary btn-sm" onclick="newConversation()">新建对话</button>
+                </div>
+                <div class="input-row">
+                    <input type="text" id="message-input" placeholder="输入消息，Enter 发送..."
                            onkeypress="if(event.key==='Enter')sendMessage()">
-                    <button onclick="sendMessage()">发送</button>
-                </div>
-                <div style="margin-top: 8px; display: flex; gap: 8px;">
-                    <button class="secondary" onclick="newConversation()" style="flex: 1;">新建对话</button>
-                    <button class="secondary" onclick="refreshState()">刷新状态</button>
+                    <button class="btn btn-primary" onclick="sendMessage()">➤</button>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script>
-        // 初始化 mermaid（可能加载失败，不影响核心功能）
+        // ============================================================
+        // 初始化
+        // ============================================================
         let mermaidReady = false;
         try {
             if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({ 
-                    startOnLoad: false, 
+                mermaid.initialize({
+                    startOnLoad: false,
                     theme: 'default',
-                    flowchart: { 
-                        useMaxWidth: true,
-                        htmlLabels: true,
-                        curve: 'basis'
-                    }
+                    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+                    securityLevel: 'loose'
                 });
                 mermaidReady = true;
+                console.log('Mermaid 初始化成功');
             }
         } catch (e) {
             console.warn('Mermaid 初始化失败:', e);
         }
-        
+
         let sessionId = 'inspect-' + Date.now();
         let ws = null;
         let flows = [];
         let currentFlowId = null;
         let currentFlowIndex = null;
         let trackerData = null;
-        
-        // WebSocket 连接
+
+        // ============================================================
+        // WebSocket（自动检测 wss:// / ws://）
+        // ============================================================
         function connect() {
-            ws = new WebSocket(`ws://${location.host}/api/stream`);
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            try {
+                ws = new WebSocket(`${protocol}//${location.host}/api/stream`);
+            } catch (e) {
+                console.error('WebSocket 连接创建失败:', e);
+                setStatus(false);
+                setTimeout(connect, 5000);
+                return;
+            }
+
             ws.onopen = () => {
-                document.getElementById('status').textContent = 'Connected';
-                document.getElementById('status').className = 'status connected';
-                ws.send(JSON.stringify({type: 'connect', session_id: sessionId}));
+                console.log('WebSocket 已连接');
+                setStatus(true);
+                ws.send(JSON.stringify({ type: 'connect', session_id: sessionId }));
                 refreshState();
             };
+
             ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'bot_response') {
-                    data.data.forEach(msg => {
-                        const text = msg.text || JSON.stringify(msg);
-                        const buttons = msg.buttons || [];
-                        addMessage(text, 'bot', buttons);
-                    });
-                    // 刷新状态
-                    setTimeout(refreshState, 100);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'bot_response' && data.data) {
+                        data.data.forEach(msg => {
+                            const text = msg.text || JSON.stringify(msg);
+                            const buttons = msg.buttons || [];
+                            addMessage(text, 'bot', buttons);
+                        });
+                        setTimeout(refreshState, 200);
+                    }
+                } catch (e) {
+                    console.error('消息解析失败:', e);
                 }
             };
-            ws.onclose = () => {
-                document.getElementById('status').textContent = 'Disconnected';
-                document.getElementById('status').className = 'status disconnected';
+
+            ws.onerror = () => {
+                console.warn('WebSocket 错误');
+                setStatus(false);
+            };
+
+            ws.onclose = (e) => {
+                console.log('WebSocket 断开, code:', e.code);
+                setStatus(false);
                 setTimeout(connect, 3000);
             };
         }
-        
-        // Tab 切换
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(tabName + '-tab').classList.add('active');
+
+        function setStatus(connected) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            dot.className = 'status-dot ' + (connected ? 'on' : 'off');
+            text.textContent = connected ? '已连接' : '未连接';
         }
-        
-        // 添加消息（支持按钮）
+
+        // ============================================================
+        // Tab 切换（事件委托）
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.tabs').addEventListener('click', (e) => {
+                const tab = e.target.closest('.tab');
+                if (!tab) return;
+                const tabName = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                const content = document.getElementById('tab-' + tabName);
+                if (content) content.classList.add('active');
+            });
+        });
+
+        // ============================================================
+        // 聊天消息
+        // ============================================================
         function addMessage(text, type, buttons) {
             const box = document.getElementById('chat-box');
             const div = document.createElement('div');
-            div.className = 'message ' + type;
+            div.className = 'msg ' + type;
             div.textContent = text;
-            
-            // 如果有按钮，添加按钮容器
+
             if (buttons && buttons.length > 0) {
                 const btnContainer = document.createElement('div');
-                btnContainer.className = 'message-buttons';
+                btnContainer.className = 'msg-buttons';
                 buttons.forEach(btn => {
                     const button = document.createElement('button');
-                    button.className = 'message-btn';
-                    button.textContent = btn.title;
+                    button.className = 'msg-btn';
+                    button.textContent = btn.title || btn.payload || '';
                     button.onclick = () => {
-                        // 发送 payload 作为用户消息
-                        const payload = btn.payload || btn.title;
-                        addMessage(btn.title, 'user');
+                        const payload = btn.payload || btn.title || '';
+                        addMessage(payload, 'user');
                         if (ws && ws.readyState === WebSocket.OPEN) {
-                            ws.send(JSON.stringify({type: 'message', message: payload}));
+                            ws.send(JSON.stringify({ type: 'message', message: payload }));
                         }
                     };
                     btnContainer.appendChild(button);
                 });
                 div.appendChild(btnContainer);
             }
-            
+
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
         }
-        
-        // 发送消息
+
+        function showTyping() {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = 'typing-indicator';
+            div.id = 'typing';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+
         function sendMessage() {
             const input = document.getElementById('message-input');
             const text = input.value.trim();
             if (!text) return;
+
             addMessage(text, 'user');
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({type: 'message', message: text}));
-            }
             input.value = '';
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'message', message: text }));
+                showTyping();
+                // 收到回复后自动隐藏 typing（在 onmessage 中 remove）
+                setTimeout(hideTyping, 8000); // 8秒超时兜底
+            } else {
+                addMessage('⚠️ WebSocket 未连接，请稍后重试', 'system');
+            }
         }
-        
-        // 新建对话
+
         function newConversation() {
             sessionId = 'inspect-' + Date.now();
-            document.getElementById('chat-box').innerHTML = '';
-            document.getElementById('flow-history').innerHTML = '';
-            document.getElementById('slots-table').innerHTML = '';
+            document.getElementById('chat-box').innerHTML = '<div class="msg system">🔄 新对话已创建</div>';
+            document.getElementById('flow-history-list').innerHTML = '<div class="empty-state"><div class="text">暂无活跃 Flow</div></div>';
+            document.getElementById('slots-list').innerHTML = '';
             document.getElementById('events-list').innerHTML = '';
             document.getElementById('tracker-json').textContent = '';
-            document.getElementById('flow-count').textContent = '0 flows';
-            document.getElementById('flow-diagram').innerHTML = '<div class="no-flow"><div>选择左侧的 Flow 查看图形</div></div>';
+            document.getElementById('flow-count').textContent = '0';
+            document.getElementById('current-flow-name').textContent = '—';
+            document.getElementById('flow-diagram').innerHTML = '';
+            document.getElementById('flow-empty').style.display = '';
             currentFlowId = null;
+            currentFlowIndex = null;
+
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({type: 'connect', session_id: sessionId}));
+                ws.send(JSON.stringify({ type: 'connect', session_id: sessionId }));
+                setTimeout(() => {
+                    const userId = document.getElementById('user-id-input').value.trim();
+                    if (userId) setUserId(false);
+                }, 300);
             }
-            // 新建对话后自动设置用户 ID
-            setTimeout(() => {
-                const userId = document.getElementById('user-id-input').value.trim();
-                if (userId) {
-                    setUserId(false);  // 静默设置，不显示消息
-                }
-            }, 200);
         }
-        
-        // 设置用户 ID
-        function setUserId(showMessage = true) {
+
+        function setUserId(showToast = true) {
             const userId = document.getElementById('user-id-input').value.trim();
             if (!userId) {
-                alert('请输入用户 ID');
+                toast('请输入用户 ID');
                 return;
             }
-            // 发送 SetSlots 命令设置 user_id
             const cmd = `/SetSlots(user_id=${userId})`;
-            if (showMessage) {
-                addMessage(`切换用户: ${userId}`, 'user');
+            if (showToast) {
+                addMessage(`切换用户: ${userId}`, 'system');
             }
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({type: 'message', message: cmd}));
+                ws.send(JSON.stringify({ type: 'message', message: cmd }));
             }
-            if (showMessage) {
-                setTimeout(refreshState, 100);
+            if (showToast) {
+                setTimeout(refreshState, 200);
             }
         }
-        
-        // 刷新状态
+
+        // ============================================================
+        // 状态刷新
+        // ============================================================
         async function refreshState() {
             try {
                 const resp = await fetch(`/api/tracker/${sessionId}/full`);
@@ -480,257 +754,254 @@
                     updateUI(trackerData);
                 }
             } catch (e) {
-                console.error('Error refreshing state:', e);
+                console.error('刷新状态失败:', e);
             }
         }
-        
-        // 更新 UI
+
         function updateUI(data) {
-            // 更新 Slots
-            const slotsTable = document.getElementById('slots-table');
-            slotsTable.innerHTML = '';
-            if (data.slots) {
+            if (!data) return;
+
+            // Slots
+            const slotsList = document.getElementById('slots-list');
+            slotsList.innerHTML = '';
+            if (data.slots && Object.keys(data.slots).length > 0) {
                 Object.entries(data.slots).forEach(([name, value]) => {
-                    const tr = document.createElement('tr');
-                    const valueStr = value === null ? '<span class="slot-null">null</span>' : 
-                                     `<span class="slot-value">${JSON.stringify(value)}</span>`;
-                    tr.innerHTML = `<td>${name}</td><td>${valueStr}</td>`;
-                    slotsTable.appendChild(tr);
+                    const row = document.createElement('div');
+                    row.className = 'kv-row';
+                    const isNull = value === null || value === undefined;
+                    const valStr = isNull ? '(null)' : JSON.stringify(value);
+                    row.innerHTML = `<span class="kv-key">${escapeHtml(name)}</span><span class="kv-val${isNull ? ' null' : ''}">${escapeHtml(valStr)}</span>`;
+                    slotsList.appendChild(row);
                 });
+            } else {
+                slotsList.innerHTML = '<div class="empty-state" style="padding:16px;"><div class="text">暂无 Slots</div></div>';
             }
-            if (slotsTable.innerHTML === '') {
-                slotsTable.innerHTML = '<tr><td colspan="2" class="empty-state">暂无 Slots</td></tr>';
-            }
-            
-            // 更新 Events
+
+            // Events
             const eventsList = document.getElementById('events-list');
             eventsList.innerHTML = '';
             if (data.events && data.events.length > 0) {
                 data.events.forEach(evt => {
                     const div = document.createElement('div');
-                    div.className = 'event-item ' + evt.event;
-                    div.innerHTML = `<div class="event-type">${evt.event}</div><div>${evt.text || ''}</div>`;
+                    div.className = 'event-item ' + (evt.event || '');
+                    const tag = (evt.event || '').includes('user') ? 'user' : 'bot';
+                    div.innerHTML = `<div class="event-tag ${tag}">${escapeHtml(evt.event || '')}</div><div>${escapeHtml(evt.text || '')}</div>`;
                     eventsList.appendChild(div);
                 });
             } else {
-                eventsList.innerHTML = '<div class="empty-state">暂无 Events</div>';
+                eventsList.innerHTML = '<div class="empty-state" style="padding:16px;"><div class="text">暂无 Events</div></div>';
             }
-            
-            // 更新 Flow History
-            const flowHistory = document.getElementById('flow-history');
+
+            // Flow History
+            const flowHistory = document.getElementById('flow-history-list');
+            const flowCount = document.getElementById('flow-count');
             flowHistory.innerHTML = '';
             if (data.flow_history && data.flow_history.length > 0) {
-                document.getElementById('flow-count').textContent = data.flow_history.length + ' flows';
+                flowCount.textContent = data.flow_history.length;
                 data.flow_history.forEach((hist, index) => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'flow-row' + (index === currentFlowIndex ? ' active' : '');
-                    tr.dataset.index = index;
-                    const status = hist.completed ? '✓' : '...';
-                    tr.innerHTML = `<td>${hist.flow_id}</td><td>${status}</td>`;
-                    tr.onclick = () => selectFlowByIndex(index, hist.flow_id);
-                    flowHistory.appendChild(tr);
+                    const div = document.createElement('div');
+                    div.className = 'flow-item' + (index === currentFlowIndex ? ' active' : '');
+                    div.dataset.index = index;
+                    const completed = hist.completed;
+                    div.innerHTML = `
+                        <div class="flow-icon ${completed ? 'done' : 'running'}">${completed ? '✓' : '●'}</div>
+                        <div class="flow-name">${escapeHtml(hist.flow_id || 'unknown')}</div>
+                        <div class="flow-status">${completed ? '完成' : '进行中'}</div>
+                    `;
+                    div.onclick = () => selectFlowByIndex(index, hist.flow_id);
+                    flowHistory.appendChild(div);
                 });
             } else {
-                flowHistory.innerHTML = '<tr><td colspan="2" class="empty-state">暂无 Flow</td></tr>';
-                document.getElementById('flow-count').textContent = '0 flows';
+                flowCount.textContent = '0';
+                flowHistory.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="text">暂无活跃 Flow</div></div>';
             }
-            
-            // 更新 Tracker JSON
+
+            // Tracker JSON
             document.getElementById('tracker-json').textContent = JSON.stringify(data, null, 2);
-            
-            // 如果有活跃 Flow，选中它
+
+            // 如果有活跃 Flow 且当前未选中，自动选中
             if (data.active_flow && !currentFlowId) {
                 selectFlow(data.active_flow);
             }
         }
-        
-        // 加载 Flows
+
+        // ============================================================
+        // Flow 图谱
+        // ============================================================
         async function refreshFlows() {
             try {
                 const resp = await fetch('/api/flows');
                 if (resp.ok) {
                     flows = await resp.json();
-                    if (currentFlowId) {
-                        renderFlowDiagram(currentFlowId);
-                    }
+                    if (currentFlowId) renderFlowDiagram(currentFlowId);
                 }
             } catch (e) {
-                console.error('Error loading flows:', e);
+                console.error('加载 Flow 失败:', e);
+                toast('加载 Flow 列表失败');
             }
         }
-        
-        // 选择 Flow（通过索引）
+
         function selectFlowByIndex(index, flowId) {
             currentFlowIndex = index;
             currentFlowId = flowId;
-            document.querySelectorAll('.flow-row').forEach(r => r.classList.remove('active'));
-            const targetRow = document.querySelector(`.flow-row[data-index="${index}"]`);
-            if (targetRow) targetRow.classList.add('active');
+            document.querySelectorAll('#flow-history-list .flow-item').forEach(r => r.classList.remove('active'));
+            const target = document.querySelector(`#flow-history-list .flow-item[data-index="${index}"]`);
+            if (target) target.classList.add('active');
+            document.getElementById('flow-empty').style.display = 'none';
             renderFlowDiagram(flowId);
         }
-        
-        // 选择 Flow（通过名称，保留向后兼容）
+
         function selectFlow(flowId) {
             currentFlowId = flowId;
             currentFlowIndex = null;
-            document.querySelectorAll('.flow-row').forEach(r => r.classList.remove('active'));
-            // 只选中第一个匹配的
-            const firstMatch = document.querySelector(`.flow-row td:first-child`);
-            document.querySelectorAll('.flow-row').forEach(r => {
-                if (r.cells[0].textContent === flowId && currentFlowIndex === null) {
+            document.querySelectorAll('#flow-history-list .flow-item').forEach(r => {
+                r.classList.remove('active');
+                if (r.querySelector('.flow-name')?.textContent === flowId && currentFlowIndex === null) {
                     r.classList.add('active');
                     currentFlowIndex = parseInt(r.dataset.index);
                 }
             });
+            document.getElementById('flow-empty').style.display = 'none';
             renderFlowDiagram(flowId);
         }
-        
-        // 渲染 Flow 图
+
         async function renderFlowDiagram(flowId) {
+            if (!mermaidReady) {
+                document.getElementById('flow-diagram').innerHTML =
+                    '<div class="empty-state"><div class="icon">⚠️</div><div class="text">Mermaid 未加载</div><div class="hint">请检查网络连接后刷新页面</div></div>';
+                return;
+            }
+
+            document.getElementById('current-flow-name').textContent = flowId || '—';
             const flow = flows.find(f => f.id === flowId);
-            document.getElementById('current-flow-name').textContent = flowId;
-            
-            // 内置 patterns 的特殊处理（UI展示名称为pattern_xxx，实际触发action_xxx）
+
+            // 内置 Pattern 特殊处理
             const builtinPatterns = {
                 'pattern_chitchat': {
-                    name: 'Chitchat Pattern',
+                    name: 'Chitchat Pattern · 闲聊模式',
                     action: 'action_chitchat_response',
-                    description: '闲聊模式 - 处理非业务相关的闲聊对话',
-                    diagram: 'flowchart TD\n    start([用户输入]) --> detect{检测闲聊}\n    detect --> llm[LLM生成回复]\n    llm --> respond([返回闲聊回复])'
+                    description: '处理非业务相关的闲聊对话，让 LLM 自由生成友好回复',
+                    diagram: 'flowchart TD\n    A([用户输入]) --> B{检测闲聊意图}\n    B --> C[LLM 生成闲聊回复]\n    C --> D([返回回复])'
                 },
                 'pattern_cannot_handle': {
-                    name: 'Cannot Handle Pattern',
+                    name: 'Cannot Handle Pattern · 兜底模式',
                     action: 'action_default_fallback',
-                    description: '无法处理模式 - 当系统无法理解用户意图时触发',
-                    diagram: 'flowchart TD\n    start([用户输入]) --> detect{无法识别}\n    detect --> fallback[默认回复]\n    fallback --> respond([返回降级回复])'
+                    description: '当系统无法理解用户意图时触发，生成降级回复',
+                    diagram: 'flowchart TD\n    A([用户输入]) --> B{无法识别意图}\n    B --> C[触发降级回复]\n    C --> D([返回兜底消息])'
                 },
                 'pattern_cancel': {
-                    name: 'Cancel Pattern',
+                    name: 'Cancel Pattern · 取消模式',
                     action: 'action_cancel_flow',
-                    description: '取消模式 - 用户取消当前对话流程',
-                    diagram: 'flowchart TD\n    start([用户输入]) --> detect{检测取消意图}\n    detect --> clear[清除当前Flow]\n    clear --> respond([确认取消])'
+                    description: '用户主动取消当前对话流程',
+                    diagram: 'flowchart TD\n    A([用户输入]) --> B{检测取消意图}\n    B --> C[清除当前 Flow 栈帧]\n    C --> D([确认取消])'
                 },
                 'pattern_session_start': {
-                    name: 'Session Start Pattern',
+                    name: 'Session Start · 会话开始',
                     action: 'action_session_start',
-                    description: '会话开始模式 - 新会话初始化',
-                    diagram: 'flowchart TD\n    start([会话开始]) --> init[初始化Tracker]\n    init --> greet[发送欢迎语]\n    greet --> listen([等待用户输入])'
+                    description: '新会话初始化，发送欢迎语并进入等待状态',
+                    diagram: 'flowchart TD\n    A([会话开始]) --> B[初始化 Tracker]\n    B --> C[发送欢迎消息]\n    C --> D([等待用户输入])'
                 },
                 'pattern_search': {
-                    name: 'Knowledge Search Pattern',
+                    name: 'Knowledge Search · GraphRAG 检索',
                     action: 'action_trigger_search',
-                    description: '知识检索模式 - GraphRAG知识库检索，包含路由识别、混合检索、Cypher生成等完整流程',
+                    description: '七步 GraphRAG 知识检索流水线：标签路由 → 混合检索 → Cypher 生成 → 校验 → 执行',
                     diagram: `flowchart TD
-    start([用户提问]) --> push[压入SearchStackFrame]
-    push --> policy[EnterpriseSearchPolicy处理]
-    policy --> hasRetriever{检索器可用?}
-    hasRetriever -->|否| noKB[utter_no_knowledge_base]
-    hasRetriever -->|是| route[1.标签路由<br/>LLM识别节点类型]
-    route --> routeFail{路由成功?}
-    routeFail -->|否| simpleRoute[降级: 简单关键词路由]
-    routeFail -->|是| retrieve[2.混合检索<br/>Vector + Fulltext]
-    simpleRoute --> retrieve
-    retrieve --> hasResults{有检索结果?}
-    hasResults -->|否| fallback[utter_no_relevant_answer_found]
-    hasResults -->|是| cypher[3.LLM生成Cypher查询]
-    cypher --> validate[4.Cypher校验与修正]
-    validate --> execute[5.执行Neo4j查询]
-    execute --> execFail{执行成功?}
-    execFail -->|否| retry[重试/降级处理]
-    execFail -->|是| format[6.格式化结果]
-    retry --> format
-    format --> respond([返回SearchResult])
-    fallback --> respond
-    noKB --> respond
-    
-    style push fill:#4a90d9,color:#fff
-    style policy fill:#5c6bc0,color:#fff
-    style route fill:#26a69a,color:#fff
-    style retrieve fill:#26a69a,color:#fff
-    style cypher fill:#26a69a,color:#fff
-    style validate fill:#26a69a,color:#fff
-    style execute fill:#26a69a,color:#fff
-    style format fill:#26a69a,color:#fff
-    style fallback fill:#ef5350,color:#fff
-    style noKB fill:#ef5350,color:#fff`
+    A([用户提问]) --> B[标签路由: LLM 识别节点类型]
+    B --> B2{路由成功?}
+    B2 -->|否| B3[降级: 关键词路由]
+    B2 -->|是| C
+    B3 --> C[混合检索: Vector + Fulltext]
+    C --> C2{有结果?}
+    C2 -->|否| Z[utter_no_relevant_answer_found]
+    C2 -->|是| D[LLM 生成 Cypher 查询]
+    D --> E[Cypher 语法校验与修正]
+    E --> E2{校验通过?}
+    E2 -->|否| E3[LLM 错误校正]
+    E2 -->|是| F
+    E3 --> F[执行 Neo4j 查询]
+    F --> F2{执行成功?}
+    F2 -->|否| F3[重试/降级]
+    F2 -->|是| G
+    F3 --> G[格式化查询结果]
+    G --> H([返回 SearchResult])
+    Z --> H
+    style B fill:#6c5ce7,color:#fff
+    style C fill:#10b981,color:#fff
+    style D fill:#f59e0b,color:#fff
+    style E fill:#f59e0b,color:#fff
+    style F fill:#3b82f6,color:#fff
+    style Z fill:#e94560,color:#fff`
                 },
                 'pattern_completed': {
-                    name: 'Flow Completed Pattern',
+                    name: 'Flow Completed · 流程完成',
                     action: 'action_flow_completed',
-                    description: '流程完成模式 - Flow执行完成后询问用户是否还需要帮助',
-                    diagram: 'flowchart TD\n    start([Flow完成]) --> check{流程结束}\n    check --> ask[询问还需要什么帮助]\n    ask --> listen([等待用户输入])'
+                    description: 'Flow 执行完成后询问用户是否还需要帮助',
+                    diagram: 'flowchart TD\n    A([Flow 完成]) --> B{流程结束}\n    B --> C[询问还需要什么帮助]\n    C --> D([等待输入])'
                 },
                 'pattern_human_handoff': {
-                    name: 'Human Handoff Pattern',
+                    name: 'Human Handoff · 人工转接',
                     action: 'action_human_handoff',
-                    description: '人工转接模式 - 将对话转接给人工客服',
-                    diagram: 'flowchart TD\n    start([用户请求]) --> detect{检测转人工意图}\n    detect --> handoff[转接人工客服]\n    handoff --> respond([通知用户等待])'
+                    description: '将对话转接给人工客服处理',
+                    diagram: 'flowchart TD\n    A([用户请求]) --> B{检测转人工意图}\n    B --> C[转接人工客服]\n    C --> D([通知用户等待])'
                 }
             };
-            
+
             const pattern = builtinPatterns[flowId];
             if (pattern) {
-                // 显示内置 pattern 的图
-                const container = document.getElementById('flow-diagram');
-                container.innerHTML = '<div class="pattern-info"><strong>' + pattern.name + '</strong><p>' + pattern.description + '</p><p style="font-size:12px;color:#888;">Action: <code>' + pattern.action + '</code></p></div><div id="mermaid-' + Date.now() + '"></div>';
                 try {
-                    const {svg} = await mermaid.render('mermaid-render-' + Date.now(), pattern.diagram);
-                    container.querySelector('div:last-child').innerHTML = svg;
-                } catch(e) {
+                    const uniqueId = 'mermaid-pattern-' + Date.now();
+                    const { svg } = await mermaid.render(uniqueId, pattern.diagram);
+                    document.getElementById('flow-diagram').innerHTML =
+                        '<div class="pattern-card"><strong>' + escapeHtml(pattern.name) + '</strong><p>' + escapeHtml(pattern.description) + '</p><p style="margin-top:8px;"><code>' + escapeHtml(pattern.action) + '</code></p></div>' +
+                        '<div class="mermaid">' + svg + '</div>';
+                } catch (e) {
                     console.error('Mermaid render error:', e);
+                    document.getElementById('flow-diagram').innerHTML =
+                        '<div class="pattern-card"><strong>' + escapeHtml(pattern.name) + '</strong><p>' + escapeHtml(pattern.description) + '</p></div>' +
+                        '<div class="empty-state"><div class="text">图形渲染失败</div></div>';
                 }
                 return;
             }
-            
-            if (!flow) {
-                document.getElementById('flow-diagram').innerHTML = 
-                    '<div class="no-flow"><div>Flow "' + flowId + '" 未找到</div></div>';
+
+            if (!flow || !flow.steps || flow.steps.length === 0) {
+                document.getElementById('flow-diagram').innerHTML =
+                    '<div class="empty-state"><div class="icon">🔍</div><div class="text">Flow "' + escapeHtml(flowId) + '" 未找到</div></div>';
                 return;
             }
-            
-            // 生成 Mermaid 图
+
+            // 构建 Mermaid 图
             let mermaidCode = 'flowchart TD\n';
             flow.steps.forEach((step, idx) => {
-                const nodeId = step.id.replace(/[^a-zA-Z0-9]/g, '_');
-                const label = step.action || step.collect || step.id;
+                const nodeId = (step.id || 'step_' + idx).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+                const label = step.action || step.collect || step.id || ('步骤' + (idx + 1));
                 const shape = step.action ? '([' + label + '])' : step.collect ? '{{' + label + '}}' : '[' + label + ']';
                 mermaidCode += '    ' + nodeId + shape + '\n';
-                
-                // 处理 next 字段（可能是字符串、数组或对象）
-                // 辅助函数：从 target 提取目标节点ID
+
                 function extractTarget(target) {
-                    if (typeof target === 'string') {
-                        return target;
-                    } else if (Array.isArray(target) && target.length > 0) {
-                        // target 是嵌套步骤数组，取最后一个步骤的 next 或返回 END
+                    if (typeof target === 'string') return target;
+                    if (Array.isArray(target) && target.length > 0) {
                         const lastStep = target[target.length - 1];
-                        if (lastStep.next) {
-                            return extractTarget(lastStep.next);
-                        }
+                        if (lastStep && lastStep.next) return extractTarget(lastStep.next);
                         return 'END';
                     }
                     return null;
                 }
-                
+
                 const nextVal = step.next;
                 if (nextVal) {
                     if (typeof nextVal === 'string') {
-                        // 简单字符串：直接连接
                         if (nextVal.toLowerCase() !== 'end') {
-                            const nextId = nextVal.replace(/[^a-zA-Z0-9]/g, '_');
-                            mermaidCode += '    ' + nodeId + ' --> ' + nextId + '\n';
+                            mermaidCode += '    ' + nodeId + ' --> ' + nextVal.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_') + '\n';
                         } else {
                             mermaidCode += '    ' + nodeId + ' --> END((End))\n';
                         }
                     } else if (Array.isArray(nextVal)) {
-                        // 条件数组：解析 if/then/else 结构
                         nextVal.forEach(cond => {
                             let target = extractTarget(cond.then || cond.else);
-                            const condLabel = cond.if ? cond.if.substring(0, 20).replace(/"/g, "'") : 'else';
+                            const condLabel = (cond.if || 'else').substring(0, 24).replace(/"/g, "'");
                             if (target) {
                                 if (target.toLowerCase() !== 'end') {
-                                    const targetId = target.replace(/[^a-zA-Z0-9]/g, '_');
-                                    mermaidCode += '    ' + nodeId + ' -->|' + condLabel + '| ' + targetId + '\n';
+                                    mermaidCode += '    ' + nodeId + ' -->|' + condLabel + '| ' + target.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_') + '\n';
                                 } else {
                                     mermaidCode += '    ' + nodeId + ' -->|' + condLabel + '| END((End))\n';
                                 }
@@ -738,32 +1009,54 @@
                         });
                     }
                 } else {
-                    // 无 next：连接到 END
                     mermaidCode += '    ' + nodeId + ' --> END((End))\n';
                 }
             });
-            
+
             // 高亮当前步骤
             if (trackerData && trackerData.flow_stack) {
                 const currentFrame = trackerData.flow_stack.find(f => f.flow_id === flowId);
-                if (currentFrame) {
-                    const stepId = currentFrame.step_id.replace(/[^a-zA-Z0-9]/g, '_');
-                    mermaidCode += '    style ' + stepId + ' fill:#e94560,color:#fff\n';
+                if (currentFrame && currentFrame.step_id) {
+                    const stepId = currentFrame.step_id.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+                    mermaidCode += '    style ' + stepId + ' fill:#6c5ce7,color:#fff,stroke:#5a4bd1\n';
                 }
             }
-            
+
             try {
+                const uniqueId = 'mermaid-flow-' + Date.now();
                 const container = document.getElementById('flow-diagram');
                 container.innerHTML = '<div class="mermaid">' + mermaidCode + '</div>';
                 await mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
             } catch (e) {
-                console.error('Mermaid error:', e);
-                document.getElementById('flow-diagram').innerHTML = 
-                    '<div class="no-flow"><div>图形渲染失败</div><pre style="font-size:10px;color:#666;">' + mermaidCode.replace(/\\n/g, '\n') + '</pre></div>';
+                console.error('Mermaid render error:', e);
+                document.getElementById('flow-diagram').innerHTML =
+                    '<div class="empty-state"><div class="text">图形渲染失败</div><pre style="font-size:10px;margin-top:8px;color:var(--text-muted);text-align:left;">' +
+                    escapeHtml(mermaidCode) + '</pre></div>';
             }
         }
-        
-        // 初始化
+
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            str = String(str);
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function toast(msg) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const div = document.createElement('div');
+            div.className = 'toast';
+            div.textContent = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        // ============================================================
+        // 启动
+        // ============================================================
         connect();
         refreshFlows();
     </script>

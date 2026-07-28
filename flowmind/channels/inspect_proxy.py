@@ -187,155 +187,139 @@ class InspectProxy(InputChannel):
     
     def _get_inspect_html(self) -> str:
         """返回Inspect页面HTML。"""
-        return """
-<!DOCTYPE html>
+        return r"""<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowMind AI - 对话调试器</title>
+    <title>FlowMind · 汇智智能客服 — 调试器</title>
     <style>
+        :root {
+            --bg: #0f0f1a; --bg2: #1a1a2e; --bg3: #222244;
+            --border: #2a2a4a; --accent: #6c5ce7; --danger: #e94560;
+            --success: #10b981; --text: #e8e8f0; --text2: #9090a8; --text3: #606078;
+            --radius: 10px; --transition: 0.2s ease;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
-        .container { display: flex; height: 100vh; }
-        .panel { flex: 1; padding: 20px; overflow-y: auto; }
-        .panel-left { background: white; border-right: 1px solid #ddd; }
-        .panel-right { background: #fafafa; }
-        h2 { margin-bottom: 15px; color: #333; }
-        .chat-box { height: calc(100vh - 200px); overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: #fff; margin-bottom: 15px; }
-        .message { margin-bottom: 10px; padding: 10px 15px; border-radius: 18px; max-width: 80%; }
-        .user-message { background: #007bff; color: white; margin-left: auto; }
-        .bot-message { background: #e9ecef; color: #333; }
-        .input-area { display: flex; gap: 10px; }
-        .input-area input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; }
-        .input-area button { padding: 12px 25px; background: #007bff; color: white; border: none; border-radius: 25px; cursor: pointer; }
-        .input-area button:hover { background: #0056b3; }
-        .state-section { margin-bottom: 20px; }
-        .state-section h3 { margin-bottom: 10px; color: #666; font-size: 14px; text-transform: uppercase; }
-        .state-content { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
-        .slot-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .slot-name { font-weight: 500; }
-        .slot-value { color: #007bff; }
-        pre { font-size: 12px; overflow-x: auto; white-space: pre-wrap; }
-        .status { padding: 5px 10px; border-radius: 4px; font-size: 12px; margin-bottom: 15px; }
-        .status.connected { background: #d4edda; color: #155724; }
-        .status.disconnected { background: #f8d7da; color: #721c24; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif;
+            background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; font-size: 13px;
+        }
+        .topbar {
+            height: 44px; background: var(--bg2); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 16px; gap: 10px;
+        }
+        .topbar .logo { font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--danger)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .topbar .spacer { flex: 1; }
+        .topbar .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .topbar .dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
+        .topbar .dot.off { background: var(--danger); }
+        .container { display: flex; height: calc(100vh - 44px); }
+        .panel { display: flex; flex-direction: column; }
+        .panel-left { flex: 1; min-width: 0; border-right: 1px solid var(--border); }
+        .panel-right { width: 340px; background: var(--bg2); }
+        .chat-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .chat-body::-webkit-scrollbar { width: 4px; }
+        .chat-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .msg { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; animation: in 0.2s ease; word-break: break-word; }
+        @keyframes in { from { opacity: 0; transform: translateY(8px); } }
+        .msg.user { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg.bot { background: var(--bg3); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .chat-input { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .chat-input input { flex: 1; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; }
+        .chat-input input:focus { outline: none; border-color: var(--accent); }
+        .chat-input input::placeholder { color: var(--text3); }
+        .btn { padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; font-size: 13px; transition: var(--transition); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #7c6cf7; }
+        .section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+        .section h3 { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+        .slot-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; }
+        .slot-row .name { color: var(--text2); }
+        .slot-row .value { font-family: 'SF Mono', monospace; color: var(--accent); word-break: break-all; font-size: 11px; }
+        .flow-name { padding: 8px 12px; background: var(--bg3); border-radius: 6px; font-size: 13px; }
+        .flow-name code { color: var(--accent); font-size: 12px; }
+        .raw-pre { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--text2); white-space: pre-wrap; line-height: 1.5; max-height: 200px; overflow-y: auto; background: var(--bg3); border-radius: 6px; padding: 10px; }
+        .raw-pre::-webkit-scrollbar { width: 4px; }
+        .raw-pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .empty { color: var(--text3); font-size: 12px; font-style: italic; }
     </style>
 </head>
 <body>
+    <div class="topbar">
+        <div class="logo">FlowMind · 汇智智能客服</div>
+        <span class="spacer"></span>
+        <span class="dot off" id="dot"></span>
+        <span id="status-text" style="font-size:12px;color:var(--text2);">未连接</span>
+    </div>
     <div class="container">
         <div class="panel panel-left">
-            <h2>对话</h2>
-            <div id="status" class="status disconnected">未连接</div>
-            <div id="chat-box" class="chat-box"></div>
-            <div class="input-area">
-                <input type="text" id="message-input" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()">
-                <button onclick="sendMessage()">发送</button>
+            <div class="chat-body" id="chat-box"></div>
+            <div class="chat-input">
+                <input type="text" id="msg-input" placeholder="输入消息，Enter 发送..." onkeypress="if(event.key==='Enter')send()">
+                <button class="btn btn-primary" onclick="send()">发送</button>
             </div>
         </div>
         <div class="panel panel-right">
-            <h2>对话状态</h2>
-            <div class="state-section">
-                <h3>槽位</h3>
-                <div id="slots" class="state-content">暂无数据</div>
+            <div class="section">
+                <h3>📌 槽位 (Slots)</h3>
+                <div id="slots"><span class="empty">暂无数据</span></div>
             </div>
-            <div class="state-section">
-                <h3>活动Flow</h3>
-                <div id="flow" class="state-content">暂无</div>
+            <div class="section">
+                <h3>📋 活动 Flow</h3>
+                <div id="flow" class="flow-name"><span class="empty">暂无</span></div>
             </div>
-            <div class="state-section">
-                <h3>原始状态</h3>
-                <div class="state-content"><pre id="raw-state">{}</pre></div>
+            <div class="section" style="flex:1;overflow:hidden;">
+                <h3>🔍 原始状态</h3>
+                <pre class="raw-pre" id="raw-state">{}</pre>
             </div>
         </div>
     </div>
-    
     <script>
-        const senderId = 'inspect_user_' + Date.now();
-        let ws = null;
-        
+        var senderId = 'inspect_' + Date.now(), ws = null;
+        function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function setStatus(on) {
+            document.getElementById('dot').className = 'dot ' + (on ? 'on' : 'off');
+            document.getElementById('status-text').textContent = on ? '已连接' : '未连接';
+        }
         function connect() {
-            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${location.host}/tracker_stream`);
-            
-            ws.onopen = () => {
-                document.getElementById('status').className = 'status connected';
-                document.getElementById('status').textContent = '已连接';
-                ws.send(JSON.stringify({action: 'retrieve', sender_id: senderId}));
-            };
-            
-            ws.onclose = () => {
-                document.getElementById('status').className = 'status disconnected';
-                document.getElementById('status').textContent = '已断开 - 重连中...';
-                setTimeout(connect, 3000);
-            };
-            
-            ws.onmessage = (event) => {
-                try {
-                    const state = JSON.parse(event.data);
-                    updateState(state);
-                } catch (e) {
-                    console.error('Parse error:', e);
-                }
-            };
+            var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            try { ws = new WebSocket(proto + '//' + location.host + '/tracker_stream'); } catch(e) { setStatus(false); setTimeout(connect,5000); return; }
+            ws.onopen = function() { setStatus(true); ws.send(JSON.stringify({action:'retrieve',sender_id:senderId})); };
+            ws.onclose = function() { setStatus(false); setTimeout(connect,3000); };
+            ws.onerror = function() { setStatus(false); };
+            ws.onmessage = function(e) { try { var s = JSON.parse(e.data); update(s); } catch(x) { console.error(x); } };
         }
-        
-        function updateState(state) {
-            // 更新槽位
-            const slotsDiv = document.getElementById('slots');
-            if (state.slots && Object.keys(state.slots).length > 0) {
-                slotsDiv.innerHTML = Object.entries(state.slots)
-                    .map(([name, value]) => `<div class="slot-item"><span class="slot-name">${name}</span><span class="slot-value">${JSON.stringify(value)}</span></div>`)
-                    .join('');
-            } else {
-                slotsDiv.textContent = '暂无槽位';
-            }
-            
-            // 更新Flow
-            const flowDiv = document.getElementById('flow');
-            flowDiv.textContent = state.active_flow || '暂无活动Flow';
-            
-            // 更新原始状态
-            document.getElementById('raw-state').textContent = JSON.stringify(state, null, 2);
+        function update(s) {
+            var d = document.getElementById('slots');
+            if (s.slots && Object.keys(s.slots).length > 0) {
+                d.innerHTML = Object.entries(s.slots).map(function(kv) {
+                    var v = kv[1] === null ? '<em style="color:var(--text3)">null</em>' : esc(JSON.stringify(kv[1]));
+                    return '<div class="slot-row"><span class="name">' + esc(kv[0]) + '</span><span class="value">' + v + '</span></div>';
+                }).join('');
+            } else { d.innerHTML = '<span class="empty">暂无槽位</span>'; }
+            var f = document.getElementById('flow');
+            f.innerHTML = s.active_flow ? '<code>' + esc(s.active_flow) + '</code>' : '<span class="empty">暂无活动 Flow</span>';
+            document.getElementById('raw-state').textContent = JSON.stringify(s, null, 2);
         }
-        
-        function addMessage(text, isUser) {
-            const chatBox = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.className = 'message ' + (isUser ? 'user-message' : 'bot-message');
-            div.textContent = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+        function addMessage(t, isUser) {
+            var box = document.getElementById('chat-box'), d = document.createElement('div');
+            d.className = 'msg ' + (isUser ? 'user' : 'bot'); d.textContent = t;
+            box.appendChild(d); box.scrollTop = box.scrollHeight;
         }
-        
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text) return;
-            
-            addMessage(text, true);
-            input.value = '';
-            
+        async function send() {
+            var inp = document.getElementById('msg-input'), t = inp.value.trim(); if (!t) return;
+            addMessage(t, true); inp.value = '';
             try {
-                const response = await fetch('/webhooks/rest/webhook', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({sender: senderId, message: text})
-                });
-                const messages = await response.json();
-                messages.forEach(msg => {
-                    if (msg.text) addMessage(msg.text, false);
-                });
-            } catch (e) {
-                addMessage('发送失败: ' + e.message, false);
-            }
+                var r = await fetch('/webhooks/rest/webhook', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sender:senderId,message:t})});
+                var msgs = await r.json();
+                (Array.isArray(msgs) ? msgs : [msgs]).forEach(function(m) { if (m.text) addMessage(m.text, false); });
+            } catch(e) { addMessage('发送失败: ' + e.message, false); }
         }
-        
         connect();
     </script>
 </body>
-</html>
-"""
+</html>"""
 
 
 # 导出

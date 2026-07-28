@@ -594,6 +594,7 @@
                     const data = JSON.parse(event.data);
                     if (data.type === 'bot_response' && data.data) {
                         hideTyping();
+                        disableOldButtons();  // 收到新回复后禁用旧按钮
                         data.data.forEach(msg => {
                             const text = msg.text || JSON.stringify(msg);
                             const buttons = msg.buttons || [];
@@ -687,6 +688,16 @@
             if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
             const typing = document.getElementById('typing');
             if (typing) typing.remove();
+        }
+
+        function disableOldButtons() {
+            // 禁用所有旧消息里的按钮，防止点过期按钮
+            document.querySelectorAll('.msg-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+                btn.style.cursor = 'not-allowed';
+                btn.onclick = null;
+            });
         }
 
         function sendMessage() {

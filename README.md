@@ -203,17 +203,43 @@ EMBEDDING_MODEL=./models/bge-base-zh-v1.5
 
 ### 4. 准备数据
 
-**MySQL 业务数据：**
+#### 4.1 MySQL 业务数据
+
+**① 创建数据库并导入表结构：**
+
+```sql
+-- 连接 MySQL 后执行
+DROP DATABASE IF EXISTS ecommerce;
+CREATE DATABASE ecommerce CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE ecommerce;
+SOURCE display_data/业务数据准备/ecs.sql;
+```
+
+或命令行一键导入：
 ```bash
 mysql -u root -p ecommerce < display_data/业务数据准备/ecs.sql
 ```
 
-**Neo4j 知识图谱：**
+**② 生成模拟数据：**
+
+修改 `ecs_demo/actions/db.py` 中的数据库连接信息（本地开发用）或设置环境变量（Docker 用，已自动配置），然后执行：
+
+```bash
+cd ecs_demo
+python gen_data.py
+```
+
+> 会生成 200 条订单 + 30 条收货地址 + 完整物流轨迹和售后记录。
+
+#### 4.2 Neo4j 知识图谱
+
 ```bash
 neo4j-admin database load --from-path=display_data/neo4j导入数据 --overwrite-destination=true neo4j
 ```
 
-**嵌入模型：** 下载 [bge-base-zh-v1.5](https://huggingface.co/BAAI/bge-base-zh-v1.5) 放入 `ecs_demo/models/`
+#### 4.3 嵌入模型
+
+下载 [bge-base-zh-v1.5](https://huggingface.co/BAAI/bge-base-zh-v1.5) 放入 `ecs_demo/models/`
 
 ### 5. 启动服务
 

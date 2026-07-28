@@ -214,7 +214,11 @@ class CommandProcessor:
         elif isinstance(command, CannotHandleCommand):
             result.response_type = "cannot_handle"
         elif isinstance(command, ClarifyCommand):
-            result.response_type = "clarify"
+            # 空澄清 = LLM 不知道怎么回答，降级为知识检索
+            if command.question is None:
+                result.response_type = "knowledge"
+            else:
+                result.response_type = "clarify"
         elif isinstance(command, HumanHandoffCommand):
             result.response_type = "human_handoff"
         # SetSlotCommand 不改变响应类型

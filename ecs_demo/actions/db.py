@@ -55,7 +55,7 @@ def _get_db_url() -> str:
 db_url = _get_db_url()
 
 # 创建数据库引擎（延迟连接，不会在导入时报错）
-engine = create_engine(db_url, pool_pre_ping=True)
+engine = create_engine(db_url, pool_pre_ping=True, connect_args={"charset": "utf8mb4"})
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 

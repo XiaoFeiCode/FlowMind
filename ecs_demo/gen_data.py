@@ -13,7 +13,7 @@ db_url = os.environ.get("DATABASE_URL") or (
     f"{os.environ.get('MYSQL_HOST', 'localhost')}:{os.environ.get('MYSQL_PORT', '3306')}/"
     f"{os.environ.get('MYSQL_DATABASE', 'ecommerce')}?charset=utf8mb4"
 )
-engine = create_engine(db_url)
+engine = create_engine(db_url, connect_args={"charset": "utf8mb4"})
 
 fake = Faker("zh_CN")
 

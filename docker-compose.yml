@@ -6,8 +6,6 @@
 # 查看日志: docker compose logs -f app
 # ============================================================
 
-version: "3.8"
-
 services:
   # ==============================
   # FlowMind 应用服务
@@ -80,11 +78,11 @@ services:
     image: neo4j:5
     container_name: flowmind-neo4j
     restart: unless-stopped
+    env_file:
+      - .docker.env
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
-      NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_server_memory_heap_initial__size: 512m
-      NEO4J_server_memory_heap_max__size: 1g
+      NEO4J_server_config_strict__validation_enabled: "false"
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs

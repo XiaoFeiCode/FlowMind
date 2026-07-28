@@ -854,12 +854,15 @@
             // Tracker JSON
             document.getElementById('tracker-json').textContent = JSON.stringify(data, null, 2);
 
-            // 自动跟踪最新活跃 Flow（优先活跃 > 进行中 > 第一个）
+            // 自动跟踪：活跃 Flow > 第一个进行中的 > 最新的
             if (data.active_flow && data.active_flow !== currentFlowId) {
                 selectFlow(data.active_flow);
-            } else if (!currentFlowId && data.flow_history && data.flow_history.length > 0) {
-                const running = data.flow_history.find(f => !f.completed);
-                selectFlow(running ? running.flow_id : data.flow_history[0].flow_id);
+            } else if (data.flow_history && data.flow_history.length > 0) {
+                const currentDone = data.flow_history.find(f => f.flow_id === currentFlowId);
+                if (!currentFlowId || (currentDone && currentDone.completed)) {
+                    const running = data.flow_history.find(f => !f.completed);
+                    selectFlow(running ? running.flow_id : data.flow_history[data.flow_history.length - 1].flow_id);
+                }
             }
         }
 

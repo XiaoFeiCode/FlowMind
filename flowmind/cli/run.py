@@ -120,8 +120,8 @@ def run_command(
             domain_path = model_path / "domain.yml"
             config_path = model_path / "config.yml"
             
-            if domain_path.exists() and config_path.exists():
-                # 从项目目录加载
+            if (domain_path.exists() or (model_path / "domain").is_dir()) and config_path.exists():
+                # 从项目目录加载（支持 domain.yml 单文件 和 domain/ 目录两种模式）
                 agent = Agent.load(str(model_path))
             else:
                 # 尝试从models目录加载最新模型

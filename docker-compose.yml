@@ -25,6 +25,8 @@ services:
       # 覆盖默认值，指向 docker-compose 服务名
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_DATABASE=ecommerce
       - NEO4J_HOST=neo4j
       - NEO4J_PORT=7687
     volumes:

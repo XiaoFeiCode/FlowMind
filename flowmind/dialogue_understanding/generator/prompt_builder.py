@@ -41,7 +41,7 @@ class PromptBuilder:
     """
     
     template_name: str = "command_prompt.jinja2"
-    max_history_turns: int = 5
+    max_history_turns: int = 10
     include_slots: bool = True
     include_flows: bool = True
     

@@ -7,7 +7,7 @@ use ecs;
 create    table region (
           province varchar(20) not null comment '省',
           city varchar(20) not null comment '市',
-          district varchar(20) not null comment '区',
+          district varchar(50) not null comment '区',
           primary key (province, city, district)
           ) comment = '区域表';
 

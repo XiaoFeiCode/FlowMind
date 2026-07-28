@@ -193,6 +193,7 @@ class InspectProxy(InputChannel):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowMind · 汇智智能客服 — 调试器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236c5ce7'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='20'>🤖</text></svg>">
     <style>
         :root {
             --bg: #0f0f1a; --bg2: #1a1a2e; --bg3: #222244;

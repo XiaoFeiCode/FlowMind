@@ -13,6 +13,7 @@ flows:
         action: action_ask_order_id_after_delivered
       - id: collect_order
         collect: order_id
+        ask_before_filling: false  # action_ask_order_id 已通过按钮展示，不再重复询问
         next:
           - if: slots.order_id == "false" or slots.order_id == "NO_ORDER"
             then: END

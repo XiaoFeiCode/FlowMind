@@ -13,12 +13,12 @@ flows:
         action: action_ask_order_id_after_delivered
       - id: collect_order
         collect: order_id
-      - id: check_eligible
-        action: action_check_postsale_eligible
         next:
           - if: slots.order_id == "false" or slots.order_id == "NO_ORDER"
             then: END
-          - else: collect_type
+          - else: check_eligible
+      - id: check_eligible
+        action: action_check_postsale_eligible
       - id: collect_type
         collect: postsale_type
       - id: ask_reason

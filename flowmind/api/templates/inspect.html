@@ -520,7 +520,13 @@
                 </div>
             </div>
             <div class="chat-body" id="chat-box">
-                <div class="msg system">👋 欢迎使用 FlowMind 汇智智能客服调试面板</div>
+                <div class="msg bot">你好！我是<strong>小智</strong>，你的专属电商客服助手 😊<br><br>
+                👉 帮你 <strong>查订单</strong>（待发货/已发货/已完成）<br>
+                👉 帮你 <strong>查物流</strong>（实时追踪包裹动态）<br>
+                👉 帮你 <strong>办售后</strong>（退货/换货/退款）<br>
+                👉 帮你 <strong>改地址</strong>、<strong>取消订单</strong><br>
+                👉 还能 <strong>闲聊解闷</strong> 哦～<br><br>
+                直接告诉我你想干什么，比如「查下我的订单」「我要退货」～</div>
             </div>
             <div class="chat-input-area">
                 <div class="toolbar">
@@ -719,7 +725,7 @@
 
         function newConversation() {
             sessionId = 'inspect-' + Date.now();
-            document.getElementById('chat-box').innerHTML = '<div class="msg system">🔄 新对话已创建</div>';
+            document.getElementById('chat-box').innerHTML = '<div class="msg bot">你好！我是<strong>小智</strong>，你的专属电商客服助手 😊<br><br>👉 帮你查订单、查物流、办售后、改地址、取消订单～<br>直接告诉我你想干什么吧！</div>';
             document.getElementById('flow-history-list').innerHTML = '<div class="empty-state"><div class="text">暂无活跃 Flow</div></div>';
             document.getElementById('slots-list').innerHTML = '';
             document.getElementById('events-list').innerHTML = '';
@@ -847,9 +853,12 @@
             // Tracker JSON
             document.getElementById('tracker-json').textContent = JSON.stringify(data, null, 2);
 
-            // 如果有活跃 Flow 且当前未选中，自动选中
-            if (data.active_flow && !currentFlowId) {
+            // 自动跟踪最新活跃 Flow（优先活跃 > 进行中 > 第一个）
+            if (data.active_flow && data.active_flow !== currentFlowId) {
                 selectFlow(data.active_flow);
+            } else if (!currentFlowId && data.flow_history && data.flow_history.length > 0) {
+                const running = data.flow_history.find(f => !f.completed);
+                selectFlow(running ? running.flow_id : data.flow_history[0].flow_id);
             }
         }
 

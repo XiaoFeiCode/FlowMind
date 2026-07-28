@@ -752,27 +752,27 @@
         // ============================================================
         async function refreshState() {
             try {
-                const userId = document.getElementById('user-id-input').value.trim();
-                const lookupId = userId || sessionId;
-                const resp = await fetch(`/api/tracker/${lookupId}/full`);
+                const resp = await fetch(`/api/tracker/${sessionId}/full`);
                 if (resp.ok) {
                     trackerData = await resp.json();
                     updateUI(trackerData);
                     // 恢复聊天历史
-                    if (trackerData && trackerData.events && trackerData.events.length > 0) {
-                        const box = document.getElementById('chat-box');
-                        if (box.children.length <= 1) {  // 只有欢迎语时恢复
-                            trackerData.events.forEach(evt => {
-                                if (evt.text) {
-                                    addMessage(evt.text, evt.event === 'user' ? 'user' : 'bot');
-                                }
-                            });
-                        }
-                    }
+                    restoreChatHistory(trackerData);
                 }
             } catch (e) {
                 console.error('刷新状态失败:', e);
             }
+        }
+        
+        function restoreChatHistory(data) {
+            if (!data || !data.events || data.events.length === 0) return;
+            const box = document.getElementById('chat-box');
+            if (box.children.length > 1) return;  // 已有历史，不重复恢复
+            data.events.forEach(evt => {
+                if (evt.text) {
+                    addMessage(evt.text, evt.event === 'user' ? 'user' : 'bot');
+                }
+            });
         }
 
         function updateUI(data) {

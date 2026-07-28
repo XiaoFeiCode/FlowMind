@@ -15,7 +15,9 @@ flows:
         collect: order_id
         ask_before_filling: false  # action_ask_order_id 已通过按钮展示，不再重复询问
         next:
-          - if: slots.order_id == "false" or slots.order_id == "NO_ORDER"
+          - if: slots.order_id == "false"
+            then: END
+          - if: slots.order_id == "NO_ORDER"
             then: END
           - else: check_eligible
       - id: check_eligible

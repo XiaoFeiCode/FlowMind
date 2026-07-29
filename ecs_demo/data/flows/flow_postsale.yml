@@ -24,9 +24,11 @@ flows:
         action: action_check_postsale_eligible
       - id: collect_type
         collect: postsale_type
+        ask_before_filling: false
       - id: ask_reason
         action: action_ask_postsale_reason
       - id: collect_reason
         collect: postsale_reason
+        ask_before_filling: false
       - id: apply
         action: action_apply_postsale

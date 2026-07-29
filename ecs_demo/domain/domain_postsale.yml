@@ -19,12 +19,10 @@ slots:
     description: 售后原因
 
 # 售后相关响应
+# 注意：售后类型和原因已由 action 按钮接管，不再使用下方模板
 responses:
-  utter_ask_postsale_type:
-    - text: "请选择售后类型：\n1. 退货退款\n2. 换货"
-  
-  utter_ask_postsale_reason:
-    - text: "请说明您申请售后的原因："
+  utter_default:
+    - text: "请问还有什么我可以帮您的吗？"
 
 # 售后相关Action声明
 actions:

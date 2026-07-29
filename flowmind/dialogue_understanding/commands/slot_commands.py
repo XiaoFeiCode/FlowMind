@@ -127,7 +127,10 @@ class SetSlotCommand(Command):
         # 如果槽位是 text 类型，将值转换为字符串
         if slot_obj and hasattr(slot_obj, 'type_name'):
             if slot_obj.type_name == "text" and value_to_set is not None:
-                value_to_set = str(value_to_set)
+                if isinstance(value_to_set, bool):
+                    value_to_set = "true" if value_to_set else "false"
+                else:
+                    value_to_set = str(value_to_set)
         
         # 设置槽位值
         try:

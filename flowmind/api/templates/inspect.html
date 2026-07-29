@@ -739,12 +739,10 @@
             currentFlowId = null;
             currentFlowIndex = null;
 
+            localStorage.setItem('flowmind_session', sessionId);
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'connect', session_id: sessionId }));
-                setTimeout(() => {
-                    const userId = document.getElementById('user-id-input').value.trim();
-                    if (userId) setUserId(false);
-                }, 300);
+                refreshState();
             }
         }
 

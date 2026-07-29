@@ -132,13 +132,13 @@ class ActionCheckPostsaleEligible(Action):
                         result.add_response("抱歉，该订单已超过7天售后期限。")
                         return result
                 
-                msg = f"订单 {order_id} 符合售后条件。\n"
-                msg += "请选择售后类型：\n"
-                msg += "1. 退款 - 仅退款不退货\n"
-                msg += "2. 退货 - 退货并退款\n"
-                msg += "3. 换货 - 退回商品换新\n"
-                
-                result.add_response(msg)
+                msg = f"订单 {order_id} 符合售后条件。请选择售后类型："
+                buttons = [
+                    {"title": "1. 退款 — 仅退款不退货", "payload": "/SetSlots(postsale_type=退款)"},
+                    {"title": "2. 退货 — 退货并退款", "payload": "/SetSlots(postsale_type=退货)"},
+                    {"title": "3. 换货 — 退回商品换新", "payload": "/SetSlots(postsale_type=换货)"},
+                ]
+                result.add_response(msg, buttons=buttons)
         except Exception as e:
             logger.error(f"检查售后资格失败: {e}")
             result.add_response("检查售后资格时出错，请稍后重试。")
@@ -199,11 +199,18 @@ class ActionAskPostsaleReason(Action):
                 )
                 
                 if reasons:
-                    msg = "请选择售后原因：\n"
+                    msg = "请选择售后原因："
+                    buttons = []
                     for i, reason in enumerate(reasons, 1):
-                        msg += f"{i}. {reason.postsale_reason}\n"
-                    msg += f"{len(reasons)+1}. 其他原因\n"
-                    result.add_response(msg)
+                        buttons.append({
+                            "title": f"{i}. {reason.postsale_reason}",
+                            "payload": f"/SetSlots(postsale_reason={reason.postsale_reason})"
+                        })
+                    buttons.append({
+                        "title": f"{len(reasons)+1}. 其他原因",
+                        "payload": "/SetSlots(postsale_reason=其他原因)"
+                    })
+                    result.add_response(msg, buttons=buttons)
                 else:
                     result.add_response("请输入售后原因：")
                     

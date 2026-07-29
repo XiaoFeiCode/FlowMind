@@ -61,11 +61,25 @@ async def action_node(state: "MessageProcessingState") -> Dict[str, Any]:
         
         if action is None:
             logger.warning(f"动作未找到: {action_name}")
-            return {
-                "current_action_result": ActionResult(success=False),
-                "action_count": action_count + 1,
-                "node_history": state.get("node_history", []) + ["action"],
-            }
+            # 检查是否有 fallback_action
+            fallback_name = prediction_metadata.get("fallback_action")
+            if fallback_name:
+                logger.info(f"尝试 fallback 动作: {fallback_name}")
+                action = get_action(fallback_name)
+                if action:
+                    action_name = fallback_name
+                else:
+                    return {
+                        "current_action_result": ActionResult(success=False),
+                        "action_count": action_count + 1,
+                        "node_history": state.get("node_history", []) + ["action"],
+                    }
+            else:
+                return {
+                    "current_action_result": ActionResult(success=False),
+                    "action_count": action_count + 1,
+                    "node_history": state.get("node_history", []) + ["action"],
+                }
         
         # 合并元数据
         kwargs = dict(metadata)

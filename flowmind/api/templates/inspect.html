@@ -530,8 +530,19 @@
             </div>
             <div class="chat-input-area">
                 <div class="toolbar">
-                    <label>用户ID</label>
-                    <input type="text" id="user-id-input" value="1001" style="width:80px;">
+                    <label>用户</label>
+                    <select id="user-id-input" style="width:100px;padding:5px 8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;">
+                        <option value="1001">1001</option>
+                        <option value="1002">1002</option>
+                        <option value="1003">1003</option>
+                        <option value="1004">1004</option>
+                        <option value="1005">1005</option>
+                        <option value="1006">1006</option>
+                        <option value="1007">1007</option>
+                        <option value="1008">1008</option>
+                        <option value="1009">1009</option>
+                        <option value="1010">1010</option>
+                    </select>
                     <button class="btn btn-secondary btn-sm" onclick="setUserId()">切换</button>
                     <span class="spacer"></span>
                     <button class="btn btn-secondary btn-sm" onclick="newConversation()">新建对话</button>

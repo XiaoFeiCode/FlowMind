@@ -565,8 +565,20 @@
             console.warn('Mermaid 初始化失败:', e);
         }
 
-        let sessionId = localStorage.getItem('flowmind_session') || ('inspect-' + Date.now());
-        localStorage.setItem('flowmind_session', sessionId);
+        // session 管理：1 小时后自动过期
+        const SESSION_TTL = 3600000; // 1 小时（毫秒）
+        function getOrCreateSessionId() {
+            const saved = localStorage.getItem('flowmind_session');
+            const savedTime = parseInt(localStorage.getItem('flowmind_session_time') || '0');
+            if (saved && savedTime && (Date.now() - savedTime < SESSION_TTL)) {
+                return saved;
+            }
+            const newId = 'inspect-' + Date.now();
+            localStorage.setItem('flowmind_session', newId);
+            localStorage.setItem('flowmind_session_time', Date.now().toString());
+            return newId;
+        }
+        let sessionId = getOrCreateSessionId();
         let ws = null;
         let flows = [];
         let currentFlowId = null;
@@ -727,6 +739,8 @@
 
         function newConversation() {
             sessionId = 'inspect-' + Date.now();
+            localStorage.setItem('flowmind_session', sessionId);
+            localStorage.setItem('flowmind_session_time', Date.now().toString());
             document.getElementById('chat-box').innerHTML = '<div class="msg bot">你好！我是<strong>小智</strong>，你的专属电商客服助手 😊<br><br>👉 帮你查订单、查物流、办售后、改地址、取消订单～<br>直接告诉我你想干什么吧！</div>';
             document.getElementById('flow-history-list').innerHTML = '<div class="empty-state"><div class="text">暂无活跃 Flow</div></div>';
             document.getElementById('slots-list').innerHTML = '';
@@ -759,6 +773,7 @@
                 ws.send(JSON.stringify({ type: 'connect', session_id: userId }));
                 sessionId = userId;
                 localStorage.setItem('flowmind_session', sessionId);
+                localStorage.setItem('flowmind_session_time', Date.now().toString());
                 refreshState();
             }
         }

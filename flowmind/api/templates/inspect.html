@@ -779,6 +779,8 @@
             }
             if (showToast) {
                 addMessage(`切换用户: ${userId}`, 'system');
+                // 清空旧聊天记录，等待 refreshState 恢复新用户的历史
+                document.getElementById('chat-box').innerHTML = '';
             }
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'connect', session_id: userId }));

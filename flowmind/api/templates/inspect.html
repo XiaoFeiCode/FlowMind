@@ -800,8 +800,9 @@
                 if (resp.ok) {
                     trackerData = await resp.json();
                     updateUI(trackerData);
-                    // 恢复聊天历史
                     restoreChatHistory(trackerData);
+                } else {
+                    restoreChatHistory(null);
                 }
             } catch (e) {
                 console.error('刷新状态失败:', e);

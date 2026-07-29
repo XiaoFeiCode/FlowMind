@@ -207,8 +207,9 @@ class FlowExecutor:
         if current_value is None:
             # 槽位未填充
             if step.ask_before_filling is False:
-                # 明确禁止询问，仅标记收集（action 已处理按钮）
+                # 明确禁止询问 — action 已处理按钮，仅标记收集
                 result.slot_to_collect = slot_name
+                result.metadata["fallback_action"] = f"action_ask_{slot_name}"
                 return result
             need_ask = True
         elif step.ask_before_filling and currently_collecting != slot_name:

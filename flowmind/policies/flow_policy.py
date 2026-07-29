@@ -109,10 +109,13 @@ class FlowPolicy(Policy):
         if flow_frame and flow_frame.completing:
             completed_flow = flow_frame.flow_id
             logger.debug(f"Flow {completed_flow} completing, triggering action_flow_completed")
-            # 重置 scoped slots
             self._reset_scoped_slots(tracker, completed_flow)
-            # 结束 flow
+            # 结束子 flow，恢复父 flow
             tracker.end_flow()
+            # 检查父 flow 是否有 return_step（CALL 步骤的返回点）
+            parent_frame = tracker.dialogue_stack.top_flow_frame()
+            if parent_frame and "return_step" in parent_frame.metadata:
+                parent_frame.step_id = parent_frame.metadata.pop("return_step")
             return PolicyPrediction(
                 action="action_flow_completed",
                 confidence=1.0,

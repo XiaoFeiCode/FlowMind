@@ -53,6 +53,7 @@ async def action_node(state: "MessageProcessingState") -> Dict[str, Any]:
         }
     
     action_name = current_prediction.action
+    prediction_metadata = current_prediction.metadata or {}
     logger.info(f"执行动作: {action_name}")
     
     try:
@@ -101,7 +102,6 @@ async def action_node(state: "MessageProcessingState") -> Dict[str, Any]:
         
         # 如果是 utter 动作但没有产生响应，尝试使用 fallback_action
         # 这是为了支持 collect 步骤中 action_ask_xxx 优先于 utter_ask_xxx 的机制
-        prediction_metadata = current_prediction.metadata or {}
         fallback_action_name = prediction_metadata.get("fallback_action")
         
         if (not result.responses 

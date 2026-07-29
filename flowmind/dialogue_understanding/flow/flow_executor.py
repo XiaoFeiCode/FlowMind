@@ -330,9 +330,7 @@ class FlowExecutor:
         result = ExecutionResult()
         
         if step.flow_id:
-            # 结束当前Flow
             tracker.end_flow()
-            # 启动新Flow
             tracker.start_flow(step.flow_id)
             result.events.append({
                 "event": "flow_switched",
@@ -340,7 +338,6 @@ class FlowExecutor:
                 "to_flow": step.flow_id,
             })
         
-        result.flow_completed = True
         return result
     
     def _execute_call_step(
@@ -353,8 +350,11 @@ class FlowExecutor:
         result = ExecutionResult()
         
         if step.flow_id:
-            # 压入当前Flow状态
+            # 保存返回点（子Flow完成后父Flow从哪继续）
+            parent_frame = tracker.dialogue_stack.top_flow_frame()
             tracker.start_flow(step.flow_id)
+            if parent_frame and step.next:
+                parent_frame.metadata["return_step"] = step.next
             result.events.append({
                 "event": "subflow_called",
                 "parent_flow": flow.id,

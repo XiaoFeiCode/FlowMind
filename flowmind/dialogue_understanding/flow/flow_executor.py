@@ -207,9 +207,9 @@ class FlowExecutor:
         if current_value is None:
             # 槽位未填充
             if step.ask_before_filling is False:
-                # 明确禁止询问 — action 已处理按钮，标记收集并静默等待
+                # 静默等待：使用步骤指定的 action 或默认 action_listen
                 result.slot_to_collect = slot_name
-                result.action = "action_listen"
+                result.action = step.action or "action_listen"
                 return result
             need_ask = True
         elif step.ask_before_filling and currently_collecting != slot_name:

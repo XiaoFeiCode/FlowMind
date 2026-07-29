@@ -625,7 +625,6 @@
                     const data = JSON.parse(event.data);
                     if (data.type === 'bot_response' && data.data) {
                         hideTyping();
-                        disableOldButtons();  // 收到新回复后禁用旧按钮
                         data.data.forEach(msg => {
                             const text = msg.text || JSON.stringify(msg);
                             const buttons = msg.buttons || [];

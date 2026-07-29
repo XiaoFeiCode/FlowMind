@@ -205,12 +205,7 @@ class FlowExecutor:
         # 判断是否需要询问用户
         need_ask = False
         if current_value is None:
-            # 槽位未填充
-            if step.ask_before_filling is False:
-                # 静默等待：使用步骤指定的 action 或默认 action_listen
-                result.slot_to_collect = slot_name
-                result.action = step.action or "action_listen"
-                return result
+            # 槽位未填充，需要询问
             need_ask = True
         elif step.ask_before_filling and currently_collecting != slot_name:
             # ask_before_filling 为 True，且我们还没开始收集这个槽位

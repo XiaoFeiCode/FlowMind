@@ -691,7 +691,7 @@
                     button.textContent = btn.title || btn.payload || '';
                     button.onclick = () => {
                         const payload = btn.payload || btn.title || '';
-                        addMessage(payload, 'user');
+                        addMessage(btn.title || payload, 'user');
                         if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 'message', message: payload }));
                         }

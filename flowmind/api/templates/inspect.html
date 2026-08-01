@@ -630,7 +630,8 @@
                             const buttons = msg.buttons || [];
                             addMessage(text, 'bot', buttons);
                         });
-                        // 不在这里刷新历史，避免覆盖当前消息
+                        // 刷新左侧面板，不重建聊天记录
+                        setTimeout(refreshSidebar, 200);
                     }
                 } catch (e) {
                     console.error('消息解析失败:', e);
@@ -794,13 +795,21 @@
         // 状态刷新
         // ============================================================
         async function refreshState() {
+            await _fetchAndUpdate(true);
+        }
+        
+        async function refreshSidebar() {
+            await _fetchAndUpdate(false);
+        }
+        
+        async function _fetchAndUpdate(restoreChat) {
             try {
                 const resp = await fetch(`/api/tracker/${sessionId}/full`);
                 if (resp.ok) {
                     trackerData = await resp.json();
                     updateUI(trackerData);
-                    restoreChatHistory(trackerData);
-                } else {
+                    if (restoreChat) restoreChatHistory(trackerData);
+                } else if (restoreChat) {
                     restoreChatHistory(null);
                 }
             } catch (e) {

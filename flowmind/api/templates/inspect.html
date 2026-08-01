@@ -630,7 +630,7 @@
                             const buttons = msg.buttons || [];
                             addMessage(text, 'bot', buttons);
                         });
-                        setTimeout(refreshState, 200);
+                        // 不在这里刷新历史，避免覆盖当前消息
                     }
                 } catch (e) {
                     console.error('消息解析失败:', e);

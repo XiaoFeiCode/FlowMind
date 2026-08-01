@@ -631,7 +631,9 @@
                             addMessage(text, 'bot', buttons);
                         });
                         // 刷新左侧面板，不重建聊天记录
-                        setTimeout(refreshSidebar, 200);
+                        setTimeout(refreshSidebar, 300);
+                        // Flow 完成有延迟，800ms 后再确认一次
+                        setTimeout(refreshSidebar, 800);
                     }
                 } catch (e) {
                     console.error('消息解析失败:', e);
@@ -901,7 +903,8 @@
                 const currentDone = data.flow_history.find(f => f.flow_id === currentFlowId);
                 if (!currentFlowId || (currentDone && currentDone.completed)) {
                     const running = data.flow_history.find(f => !f.completed);
-                    selectFlow(running ? running.flow_id : data.flow_history[data.flow_history.length - 1].flow_id);
+                    const target = running ? running.flow_id : data.flow_history[data.flow_history.length - 1].flow_id;
+                    if (target !== currentFlowId) selectFlow(target);
                 }
             }
         }

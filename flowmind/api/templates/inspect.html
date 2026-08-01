@@ -829,7 +829,7 @@
             // 恢复历史记录
             box.innerHTML = '';
             data.events.forEach(evt => {
-                if (evt.text) {
+                if (evt.text && !evt.text.startsWith('/SetSlots(')) {
                     addMessage(evt.text, evt.event === 'user' ? 'user' : 'bot');
                 }
             });

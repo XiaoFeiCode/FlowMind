@@ -590,6 +590,13 @@
             return newId;
         }
         let sessionId = getOrCreateSessionId();
+        const defaultUser = document.getElementById('user-id-input').value;
+        if (!sessionId.startsWith('inspect-') && sessionId !== defaultUser) {
+            // 上次用的不是当前用户，切换到默认用户
+            sessionId = defaultUser;
+            localStorage.setItem('flowmind_session', sessionId);
+            localStorage.setItem('flowmind_session_time', Date.now().toString());
+        }
         let ws = null;
         let flows = [];
         let currentFlowId = null;
@@ -616,8 +623,6 @@
                 setStatus(true);
                 ws.send(JSON.stringify({ type: 'connect', session_id: sessionId }));
                 refreshState();
-                // 自动设置默认用户 ID，避免首条消息无上下文
-                setTimeout(() => setUserId(false), 300);
             };
 
             ws.onmessage = (event) => {
